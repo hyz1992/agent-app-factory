@@ -526,7 +526,7 @@ router.post('/', itemController.create);
 ├── GETTING_STARTED.md    # 必须 (快速启动指南)
 ├── prisma/
 │   ├── schema.prisma     # 必须
-│   └── seed.ts           # 推荐
+│   └── seed.ts           # 必须 (开发环境种子数据)
 └── src/
     ├── index.ts          # 必须
     ├── app.ts            # 必须
@@ -832,6 +832,140 @@ npm install
 - [ ] 运行 `npm test` 查看测试覆盖
 - [ ] 修改 `src/styles/theme.ts` 自定义主题
 ```
+
+---
+
+## 种子数据 (Seed Data)
+
+每个项目必须包含种子数据脚本，用于快速初始化开发环境数据。
+
+### 种子数据要求
+
+**必须生成**: `prisma/seed.ts`
+
+**目的**:
+- 为开发环境提供演示数据
+- 让新开发者快速了解数据结构
+- 支持 UI 开发和测试
+- 便于演示时展示功能
+
+### 种子数据模板
+
+**`prisma/seed.ts`**:
+
+```typescript
+import { PrismaClient } from '@prisma/client';
+
+const prisma = new PrismaClient();
+
+async function main() {
+  console.log('🌱 开始填充种子数据...');
+
+  // 清理现有数据 (开发环境)
+  await prisma.item.deleteMany();
+
+  // 创建示例数据
+  const items = await Promise.all([
+    prisma.item.create({
+      data: {
+        title: '示例项目 1',
+        description: '这是第一个示例项目的描述',
+        amount: 100,
+      },
+    }),
+    prisma.item.create({
+      data: {
+        title: '示例项目 2',
+        description: '这是第二个示例项目的描述',
+        amount: 250,
+      },
+    }),
+    prisma.item.create({
+      data: {
+        title: '示例项目 3',
+        description: '这是第三个示例项目的描述',
+        amount: 500,
+      },
+    }),
+  ]);
+
+  console.log(`✅ 已创建 ${items.length} 条示例数据`);
+}
+
+main()
+  .catch((e) => {
+    console.error('❌ 种子数据填充失败:', e);
+    process.exit(1);
+  })
+  .finally(async () => {
+    await prisma.$disconnect();
+  });
+```
+
+### Prisma 配置
+
+在 `package.json` 中配置种子脚本:
+
+```json
+{
+  "prisma": {
+    "seed": "ts-node prisma/seed.ts"
+  },
+  "scripts": {
+    "db:seed": "npx prisma db seed",
+    "db:reset": "npx prisma migrate reset"
+  },
+  "devDependencies": {
+    "ts-node": "^10.9.0"
+  }
+}
+```
+
+### 种子数据原则
+
+**必须遵循**:
+- [ ] 数据有意义，能展示应用功能
+- [ ] 包含边界情况（空字符串、最大值、最小值）
+- [ ] 数据量适中（5-20 条，足够演示但不过多）
+- [ ] 使用中文或英文，与目标用户一致
+- [ ] 不包含敏感信息（真实邮箱、电话等）
+
+**推荐**:
+- 使用 faker 库生成更真实的数据（可选）
+- 为不同场景创建不同的种子配置
+- 添加时间戳数据展示排序功能
+
+### 种子数据示例（带关联）
+
+当数据模型有关联时:
+
+```typescript
+async function main() {
+  // 创建用户
+  const user = await prisma.user.create({
+    data: {
+      name: '测试用户',
+      email: 'test@example.com',
+    },
+  });
+
+  // 创建关联数据
+  await prisma.post.createMany({
+    data: [
+      { title: '第一篇文章', content: '内容...', authorId: user.id },
+      { title: '第二篇文章', content: '内容...', authorId: user.id },
+    ],
+  });
+}
+```
+
+### 种子数据检查清单
+
+- [ ] `prisma/seed.ts` 文件存在
+- [ ] `package.json` 包含 `prisma.seed` 配置
+- [ ] 运行 `npm run db:seed` 无报错
+- [ ] 种子数据覆盖所有核心模型
+- [ ] 种子数据支持重复执行（幂等性）
 
 ---
 
