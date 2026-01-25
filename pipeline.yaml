@@ -1,0 +1,89 @@
+version: 1
+
+pipeline:
+  name: ai-app-factory-checkpoint
+  mode: checkpoint
+
+stages:
+  - id: bootstrap
+    description: >
+      初始化项目想法。如果 `input/idea.md` 不存在，将用户提供的想法整理为结构化的文档。
+    agent: agents/bootstrap.agent.md
+    inputs: []
+    outputs:
+      - input/idea.md
+    exit_criteria:
+      - idea.md 存在
+      - idea.md 描述了一个连贯的产品想法
+
+  - id: prd
+    description: >
+      将产品想法转化为结构化的 MVP 级产品需求文档。
+    agent: agents/prd.agent.md
+    inputs:
+      - input/idea.md
+    outputs:
+      - artifacts/prd/prd.md
+    exit_criteria:
+      - PRD 包含目标用户
+      - PRD 定义 MVP 范围
+      - PRD 列出非目标（Out of Scope）
+      - PRD 不包含任何技术实现细节
+
+  - id: ui
+    description: >
+      基于 PRD 生成 UI 结构定义和可预览的原型。
+    agent: agents/ui.agent.md
+    inputs:
+      - artifacts/prd/prd.md
+    outputs:
+      - artifacts/ui/ui.schema.yaml
+      - artifacts/ui/preview.web/index.html
+    exit_criteria:
+      - ui.schema.yaml 存在
+      - 页面数量不超过 3
+      - 预览页面可在浏览器中打开
+
+  - id: tech
+    description: >
+      设计最小可行的技术架构和数据模型。
+    agent: agents/tech.agent.md
+    inputs:
+      - artifacts/prd/prd.md
+    outputs:
+      - artifacts/tech/tech.md
+      - artifacts/backend/prisma/schema.prisma
+    exit_criteria:
+      - 技术栈明确声明
+      - 数据模型与 PRD 一致
+      - 未进行过早优化或过度设计
+
+  - id: code
+    description: >
+      根据 UI 结构和技术设计生成可运行的前后端最小系统。
+    agent: agents/code.agent.md
+    inputs:
+      - artifacts/ui/ui.schema.yaml
+      - artifacts/tech/tech.md
+      - artifacts/backend/prisma/schema.prisma
+    outputs:
+      - artifacts/backend/
+      - artifacts/client/
+    exit_criteria:
+      - 后端可启动且无重大错误
+      - 客户端可渲染并访问
+      - 未引入额外的认证或无关功能
+
+  - id: preview
+    description: >
+      汇总运行方式并生成演示说明文档。
+    agent: agents/preview.agent.md
+    inputs:
+      - artifacts/backend/
+      - artifacts/client/
+    outputs:
+      - artifacts/preview/README.md
+    exit_criteria:
+      - README 包含安装步骤
+      - README 包含运行命令
+      - README 列出访问地址和演示流程
