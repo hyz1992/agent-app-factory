@@ -969,6 +969,295 @@ async function main() {
 
 ---
 
+## 日志和监控规范
+
+即使是 MVP 阶段，也需要基本的日志和监控能力以便调试和运维。
+
+### 日志原则
+
+**必须遵循**:
+- [ ] 使用结构化日志（JSON 格式）
+- [ ] 区分日志级别（error, warn, info, debug）
+- [ ] 生产环境不输出 debug 日志
+- [ ] 敏感信息（密码、Token）不出现在日志中
+
+**推荐做法**:
+- 使用成熟的日志库（winston, pino）
+- 日志包含请求 ID 以便追踪
+- 记录关键业务操作（创建、更新、删除）
+
+### 后端日志实现
+
+**日志工具**: winston 或 pino
+
+**`src/lib/logger.ts`**:
+
+```typescript
+import winston from 'winston';
+
+const logLevel = process.env.LOG_LEVEL || 'info';
+
+export const logger = winston.createLogger({
+  level: logLevel,
+  format: winston.format.combine(
+    winston.format.timestamp(),
+    winston.format.errors({ stack: true }),
+    winston.format.json()
+  ),
+  transports: [
+    new winston.transports.Console({
+      format: winston.format.combine(
+        winston.format.colorize(),
+        winston.format.simple()
+      ),
+    }),
+  ],
+});
+
+// 生产环境写入文件
+if (process.env.NODE_ENV === 'production') {
+  logger.add(
+    new winston.transports.File({
+      filename: 'logs/error.log',
+      level: 'error',
+    })
+  );
+  logger.add(
+    new winston.transports.File({
+      filename: 'logs/combined.log',
+    })
+  );
+}
+```
+
+### 日志使用示例
+
+**Controller 层**:
+
+```typescript
+import { logger } from '@/lib/logger';
+
+export const itemController = {
+  async create(req: Request, res: Response, next: NextFunction) {
+    try {
+      logger.info('Creating item', {
+        body: req.body,
+        ip: req.ip,
+      });
+
+      const item = await itemService.create(req.body);
+
+      logger.info('Item created successfully', {
+        itemId: item.id,
+      });
+
+      res.status(201).json({ success: true, data: item });
+    } catch (error) {
+      logger.error('Failed to create item', {
+        error: error instanceof Error ? error.message : 'Unknown error',
+        stack: error instanceof Error ? error.stack : undefined,
+        body: req.body,
+      });
+
+      next(error);
+    }
+  },
+};
+```
+
+### 请求日志中间件
+
+**`src/middleware/requestLogger.ts`**:
+
+```typescript
+import { Request, Response, NextFunction } from 'express';
+import { logger } from '@/lib/logger';
+
+export function requestLogger(req: Request, res: Response, next: NextFunction) {
+  const startTime = Date.now();
+
+  // 响应完成后记录
+  res.on('finish', () => {
+    const duration = Date.now() - startTime;
+
+    logger.info('HTTP Request', {
+      method: req.method,
+      path: req.path,
+      statusCode: res.statusCode,
+      duration: `${duration}ms`,
+      ip: req.ip,
+      userAgent: req.get('user-agent'),
+    });
+
+    // 慢请求警告
+    if (duration > 1000) {
+      logger.warn('Slow request detected', {
+        method: req.method,
+        path: req.path,
+        duration: `${duration}ms`,
+      });
+    }
+  });
+
+  next();
+}
+
+// 使用
+app.use(requestLogger);
+```
+
+### 日志级别规范
+
+| 级别 | 使用场景 | 示例 |
+|------|----------|------|
+| **error** | 错误和异常 | 数据库连接失败、未捕获的异常 |
+| **warn** | 警告和潜在问题 | 慢查询、即将达到限制 |
+| **info** | 重要业务操作 | 用户注册、订单创建 |
+| **debug** | 调试信息 | 函数调用、变量值（仅开发环境） |
+
+### 监控指标
+
+**必须监控的指标** (MVP 阶段):
+
+1. **健康检查端点**
+   ```typescript
+   app.get('/health', (req, res) => {
+     res.status(200).json({
+       status: 'ok',
+       timestamp: new Date().toISOString(),
+       uptime: process.uptime(),
+     });
+   });
+   ```
+
+2. **API 响应时间** (通过日志)
+   - 记录每个请求的耗时
+   - 慢请求警告 (> 1s)
+
+3. **错误率** (通过日志统计)
+   - 记录所有错误和异常
+   - 按端点统计错误次数
+
+### 前端监控
+
+**基础监控**:
+
+```typescript
+// src/lib/monitoring.ts
+export function logError(error: Error, context?: Record<string, unknown>) {
+  if (__DEV__) {
+    console.error('Error:', error, context);
+  } else {
+    // 生产环境上报到监控服务
+    // 如 Sentry, LogRocket 等
+  }
+}
+
+export function logPerformance(metric: string, value: number) {
+  if (__DEV__) {
+    console.log(`Performance [${metric}]: ${value}ms`);
+  } else {
+    // 生产环境上报性能数据
+  }
+}
+```
+
+**API 请求监控**:
+
+```typescript
+// src/api/client.ts
+import axios from 'axios';
+import { logError, logPerformance } from '@/lib/monitoring';
+
+const apiClient = axios.create({
+  baseURL: process.env.EXPO_PUBLIC_API_URL,
+});
+
+// 请求拦截器 - 记录开始时间
+apiClient.interceptors.request.use((config) => {
+  config.metadata = { startTime: Date.now() };
+  return config;
+});
+
+// 响应拦截器 - 记录耗时和错误
+apiClient.interceptors.response.use(
+  (response) => {
+    const duration = Date.now() - response.config.metadata.startTime;
+    logPerformance(`API ${response.config.url}`, duration);
+
+    if (duration > 3000) {
+      console.warn(`Slow API request: ${response.config.url} took ${duration}ms`);
+    }
+
+    return response;
+  },
+  (error) => {
+    logError(error, {
+      url: error.config?.url,
+      method: error.config?.method,
+      status: error.response?.status,
+    });
+    return Promise.reject(error);
+  }
+);
+```
+
+### 关键操作日志
+
+**必须记录的操作**:
+
+```typescript
+// 数据创建
+logger.info('Resource created', { resourceType: 'item', id: item.id });
+
+// 数据更新
+logger.info('Resource updated', { resourceType: 'item', id: item.id, changes: updatedFields });
+
+// 数据删除
+logger.info('Resource deleted', { resourceType: 'item', id: item.id });
+
+// 认证操作 (如适用)
+logger.info('User logged in', { userId: user.id });
+logger.info('User logged out', { userId: user.id });
+
+// 错误和异常
+logger.error('Operation failed', { operation: 'createItem', error: error.message });
+```
+
+### 日志和监控检查清单
+
+#### 后端
+- [ ] 使用结构化日志库（winston/pino）
+- [ ] 配置日志级别（开发: debug, 生产: info）
+- [ ] 实现请求日志中间件
+- [ ] 记录慢请求 (> 1s)
+- [ ] 记录所有错误和异常
+- [ ] 健康检查端点 `/health`
+- [ ] 日志不包含敏感信息
+
+#### 前端
+- [ ] 实现全局错误捕获
+- [ ] 记录 API 请求耗时
+- [ ] 慢 API 警告 (> 3s)
+- [ ] 开发环境详细日志，生产环境简化
+
+#### 通用
+- [ ] 日志采用 JSON 格式
+- [ ] 日志包含时间戳
+- [ ] 关键业务操作有日志记录
+- [ ] 生产环境日志写入文件
+
+### 可选扩展
+
+对于 MVP 后期或生产环境，可考虑：
+
+- **错误追踪服务**: Sentry (前后端错误监控)
+- **性能监控**: New Relic, DataDog
+- **日志聚合**: ELK Stack, Grafana Loki
+- **告警机制**: 错误率超过阈值时发送通知
+
+---
+
 ## 不要做 (NEVER)
 
 * **NEVER** 超出技术设计文件描述的范围添加功能或模块；
