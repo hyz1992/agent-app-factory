@@ -74,6 +74,25 @@ stages:
       - 客户端可渲染并访问
       - 未引入额外的认证或无关功能
 
+  - id: validation
+    description: >
+      验证生成的代码质量，确保可以正常安装依赖、通过类型检查和基本验证。
+    agent: agents/validation.agent.md
+    inputs:
+      - artifacts/backend/
+      - artifacts/client/
+    outputs:
+      - artifacts/validation/report.md
+    exit_criteria:
+      - 验证报告已生成
+      - 后端依赖可正常解析
+      - 前端依赖可正常解析
+      - TypeScript 编译无严重错误
+      - Prisma schema 验证通过
+    on_failure:
+      action: pause
+      message: "代码验证失败，请查看 artifacts/validation/report.md 了解详情并修复问题"
+
   - id: preview
     description: >
       汇总运行方式并生成演示说明文档。

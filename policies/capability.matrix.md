@@ -9,6 +9,7 @@
 | **ui** | `artifacts/prd/` | `artifacts/ui/` | 读取 PRD，生成 UI Schema 与预览 |
 | **tech** | `artifacts/prd/` | `artifacts/tech/`, `artifacts/backend/prisma/` | 读取 PRD，生成技术设计和数据模型 |
 | **code** | `artifacts/ui/`, `artifacts/tech/`, `artifacts/backend/prisma/` | `artifacts/backend/`, `artifacts/client/` | 根据 UI 和技术设计生成后端和客户端代码；不得修改上游产物 |
+| **validation** | `artifacts/backend/`, `artifacts/client/` | `artifacts/validation/` | 验证代码质量，生成验证报告；只读不修改代码 |
 | **preview** | `artifacts/backend/`, `artifacts/client/` | `artifacts/preview/` | 读取已生成的服务与客户端，编写演示说明 |
 
 ## 越权处理
