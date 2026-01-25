@@ -333,3 +333,261 @@ Client → API Gateway → Controller → Service → Prisma → Database
 - [ ] 扩展规划合理
 
 遵循这些指南可以让技术设计简洁而有弹性，为后续开发提供清晰路线。
+
+---
+
+## 性能优化指南
+
+虽然 MVP 阶段以快速交付为主，但应在设计时考虑基本的性能优化，避免明显的性能瓶颈。
+
+### 数据库性能
+
+#### 1. 索引策略
+
+**必须添加索引的场景**:
+- 外键字段 (Prisma 会自动添加)
+- 频繁查询的字段 (如 email, username)
+- 排序字段 (如 createdAt)
+- 唯一约束字段 (如 @unique)
+
+**Prisma Schema 示例**:
+```prisma
+model User {
+  id        Int      @id @default(autoincrement())
+  email     String   @unique              // 自动创建索引
+  username  String   @unique              // 自动创建索引
+  createdAt DateTime @default(now())
+
+  posts     Post[]
+
+  @@index([createdAt])                    // 手动创建索引用于排序
+}
+
+model Post {
+  id        Int      @id @default(autoincrement())
+  title     String
+  authorId  Int                           // 外键自动创建索引
+  published Boolean  @default(false)
+  createdAt DateTime @default(now())
+
+  author    User     @relation(fields: [authorId], references: [id])
+
+  @@index([published, createdAt])         // 复合索引
+}
+```
+
+**索引原则**:
+- 查询条件中的字段应考虑索引
+- 避免过度索引 (每个索引增加写入成本)
+- 复合索引顺序: 先等值查询，再范围查询，最后排序
+
+#### 2. 查询优化
+
+**使用 select 限制字段**:
+```typescript
+// ✅ 好 - 只返回需要的字段
+const users = await prisma.user.findMany({
+  select: {
+    id: true,
+    name: true,
+    email: true,
+  },
+});
+
+// ❌ 避免 - 返回所有字段包括大文本
+const users = await prisma.user.findMany();
+```
+
+**避免 N+1 查询**:
+```typescript
+// ✅ 好 - 使用 include 预加载关联
+const posts = await prisma.post.findMany({
+  include: {
+    author: {
+      select: { id: true, name: true },
+    },
+  },
+});
+
+// ❌ 避免 - N+1 查询
+const posts = await prisma.post.findMany();
+for (const post of posts) {
+  const author = await prisma.user.findUnique({ where: { id: post.authorId } });
+}
+```
+
+**使用游标分页 (Cursor Pagination)**:
+```typescript
+// ✅ 好 - 游标分页性能稳定
+async function getPosts(cursor?: number, limit = 20) {
+  return prisma.post.findMany({
+    take: limit,
+    skip: cursor ? 1 : 0,
+    cursor: cursor ? { id: cursor } : undefined,
+    orderBy: { id: 'desc' },
+  });
+}
+
+// ❌ 避免 - 偏移分页在大数据量时性能差
+async function getPosts(page = 1, limit = 20) {
+  return prisma.post.findMany({
+    skip: (page - 1) * limit,  // OFFSET 在大表中很慢
+    take: limit,
+  });
+}
+```
+
+#### 3. 事务使用
+
+**仅在必要时使用事务**:
+```typescript
+// ✅ 好 - 需要原子性时使用事务
+await prisma.$transaction(async (tx) => {
+  const user = await tx.user.create({ data: userData });
+  await tx.profile.create({ data: { userId: user.id, ...profileData } });
+});
+
+// ❌ 避免 - 单个操作不需要事务
+await prisma.$transaction(async (tx) => {
+  await tx.user.create({ data: userData });
+});
+```
+
+### API 性能
+
+#### 1. 响应压缩
+
+在 tech.md 中建议启用 gzip 压缩:
+
+```markdown
+**中间件推荐**:
+- compression: 启用 gzip 压缩减少响应体积
+- 配置: `app.use(compression())`
+```
+
+#### 2. 请求超时
+
+设置合理的超时时间防止慢查询阻塞:
+
+```markdown
+**超时配置**:
+- API 请求超时: 30s
+- 数据库查询超时: 10s (Prisma 配置)
+- 文件上传超时: 5min
+```
+
+#### 3. 分页必须
+
+所有列表接口必须支持分页:
+
+```markdown
+**分页规范**:
+- 默认每页 20 条
+- 最大每页 100 条
+- 使用游标分页 (cursor) 而非偏移分页 (offset)
+- 返回 hasMore 字段指示是否有更多数据
+```
+
+#### 4. 缓存策略 (可选)
+
+对于 MVP 阶段，不强制要求缓存，但可在 tech.md 中标注扩展点:
+
+```markdown
+**未来扩展点**:
+- 添加 Redis 缓存频繁查询的数据
+- 实现 HTTP 缓存头 (ETag, Cache-Control)
+```
+
+### 前端性能
+
+#### 1. 列表渲染优化
+
+对于 React Native，必须使用 FlatList:
+
+```markdown
+**列表组件选择**:
+- ✅ 使用 FlatList/SectionList (虚拟化渲染)
+- ❌ 避免使用 ScrollView + map (渲染所有项)
+- 配置: getItemLayout (固定高度列表)
+```
+
+#### 2. 图片优化
+
+```markdown
+**图片处理**:
+- 使用 expo-image 或 react-native-fast-image
+- 配置占位符和加载状态
+- 限制图片尺寸 (如最大 1080p)
+- 使用 CDN 加速 (生产环境)
+```
+
+#### 3. 组件优化
+
+```markdown
+**React 优化**:
+- 使用 React.memo 包裹纯展示组件
+- 使用 useMemo 缓存计算结果
+- 使用 useCallback 稳定函数引用
+- 避免在 render 中创建新对象/函数
+```
+
+#### 4. 状态更新优化
+
+```markdown
+**状态管理**:
+- 避免在根组件存储所有状态
+- 按功能拆分 Context，减少不必要的重渲染
+- 使用 Context 分离读写操作
+```
+
+### 性能监控
+
+在 tech.md 中建议添加基本的性能监控:
+
+```markdown
+## 性能监控 (可选)
+
+**后端监控**:
+- 记录慢查询 (> 1s)
+- 监控 API 响应时间
+- 记录错误率
+
+**前端监控**:
+- 使用 React DevTools Profiler 分析渲染
+- 监控 API 请求时间
+- 记录应用崩溃
+```
+
+### 性能检查清单
+
+在完成技术设计时，确认:
+
+#### 数据库
+- [ ] 外键字段有索引
+- [ ] 查询条件字段有索引
+- [ ] 列表查询使用分页
+- [ ] 避免 N+1 查询
+
+#### API
+- [ ] 所有列表接口支持分页
+- [ ] 响应启用压缩
+- [ ] 设置合理的超时时间
+
+#### 前端
+- [ ] 长列表使用 FlatList
+- [ ] 图片使用优化库
+- [ ] 纯展示组件使用 React.memo
+
+#### 文档
+- [ ] tech.md 中标注性能相关配置
+- [ ] 标注未来的性能优化扩展点
+
+---
+
+**性能优化原则**:
+- **MVP 阶段**: 避免明显的性能问题即可，不过度优化
+- **可测量**: 在优化前先测量，找到真正的瓶颈
+- **逐步改进**: 随着用户增长逐步添加优化措施
+- **保持简单**: 不因性能优化而过度复杂化架构
+
+遵循这些性能指南可以确保应用在 MVP 阶段有良好的基础性能，同时为未来的优化预留空间。

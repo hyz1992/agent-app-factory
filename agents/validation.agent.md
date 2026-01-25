@@ -72,7 +72,19 @@ cd artifacts/backend && npx prisma validate
 
 验证 Prisma schema 语法是否正确。
 
-### 5. 代码规范检查 (可选)
+### 5. 测试执行检查
+
+```bash
+# 后端测试
+cd artifacts/backend && npm test
+
+# 前端测试
+cd artifacts/client && npm test
+```
+
+验证基础测试是否存在且能通过。MVP 阶段要求至少有冒烟测试。
+
+### 6. 代码规范检查 (可选)
 
 ```bash
 # 后端
@@ -93,12 +105,16 @@ cd artifacts/client && npm run lint --if-present
 - [ ] 存在健康检查端点 (`/health`)
 - [ ] 环境变量使用 `process.env`
 - [ ] Prisma Client 导入正确
+- [ ] 存在至少一个测试文件 (`**/*.test.ts`)
+- [ ] package.json 包含 `test` 脚本
 
 **前端：**
 - [ ] 存在 SafeAreaView 使用
 - [ ] 存在 Loading 组件
 - [ ] 存在 Error 处理
 - [ ] API 调用通过封装层
+- [ ] 存在至少一个测试文件 (`**/*.test.tsx`)
+- [ ] package.json 包含 `test` 脚本
 
 ---
 
@@ -144,6 +160,16 @@ cd artifacts/client && npm run lint --if-present
 - 状态: ✅/❌
 - 详情: [输出或错误信息]
 
+### 测试执行
+- 状态: ✅/❌
+- 测试数量: N
+- 通过数量: N
+- 失败数量: N
+- 详情:
+  ```
+  [测试输出或错误信息]
+  ```
+
 ### 代码模式检查
 | 检查项 | 状态 |
 |--------|------|
@@ -171,6 +197,16 @@ cd artifacts/client && npm run lint --if-present
 - 详情:
   ```
   [错误列表]
+  ```
+
+### 测试执行
+- 状态: ✅/❌
+- 测试数量: N
+- 通过数量: N
+- 失败数量: N
+- 详情:
+  ```
+  [测试输出或错误信息]
   ```
 
 ### 代码模式检查
@@ -216,12 +252,14 @@ cd artifacts/client && npm run lint --if-present
 - 依赖安装无错误
 - TypeScript 编译无错误
 - Prisma schema 验证通过
+- 基础测试存在且全部通过
 - 关键模式检查全部通过
 
 ### 部分通过条件 (⚠️ 部分通过)
 - 必须文件存在
 - 依赖安装无错误
 - TypeScript 编译有警告但无错误
+- 测试存在但部分失败 (< 30% 失败率)
 - 存在非关键问题
 
 ### 失败条件 (❌ 失败)
@@ -229,6 +267,7 @@ cd artifacts/client && npm run lint --if-present
 - 依赖安装失败
 - TypeScript 编译有错误
 - Prisma schema 验证失败
+- 测试缺失或大量失败 (≥ 30% 失败率)
 
 ---
 

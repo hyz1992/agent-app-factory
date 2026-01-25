@@ -29,6 +29,379 @@ description: "在已有UI结构和技术架构基础上生成可运行的前后�
 
 ---
 
+## 最小测试要求 (MVP Test Requirements)
+
+即使是 MVP 阶段，也必须包含基础测试以保证代码质量。测试不求全面，但求覆盖关键路径。
+
+### 后端测试要求
+
+**必须生成的测试**:
+- [ ] 健康检查端点测试 (`GET /health` 返回 200)
+- [ ] 每个资源的核心 CRUD 端点冒烟测试 (至少创建、读取、列表)
+- [ ] 输入验证测试 (测试 Zod schema 拒绝无效数据)
+
+**测试工具**: Vitest 或 Jest
+**测试文件位置**: `src/__tests__/` 或 `src/**/*.test.ts`
+
+**测试示例结构**:
+```typescript
+// src/__tests__/items.test.ts
+import { describe, it, expect, beforeAll, afterAll } from 'vitest';
+import request from 'supertest';
+import app from '../app';
+
+describe('Items API', () => {
+  it('should return health check', async () => {
+    const res = await request(app).get('/health');
+    expect(res.status).toBe(200);
+  });
+
+  it('should create a new item', async () => {
+    const res = await request(app)
+      .post('/api/items')
+      .send({ title: 'Test Item', amount: 100 });
+
+    expect(res.status).toBe(201);
+    expect(res.body.data).toHaveProperty('id');
+  });
+
+  it('should reject invalid item', async () => {
+    const res = await request(app)
+      .post('/api/items')
+      .send({ title: '' }); // 缺少必填字段
+
+    expect(res.status).toBe(400);
+  });
+
+  it('should list all items', async () => {
+    const res = await request(app).get('/api/items');
+    expect(res.status).toBe(200);
+    expect(Array.isArray(res.body.data)).toBe(true);
+  });
+});
+```
+
+**package.json 测试脚本**:
+```json
+{
+  "scripts": {
+    "test": "vitest run",
+    "test:watch": "vitest"
+  },
+  "devDependencies": {
+    "vitest": "^1.0.0",
+    "supertest": "^6.3.0",
+    "@types/supertest": "^6.0.0"
+  }
+}
+```
+
+### 前端测试要求
+
+**必须生成的测试**:
+- [ ] 关键页面渲染测试 (主页、详情页至少各一个)
+- [ ] 核心组件渲染测试 (Button, Input 等基础组件)
+- [ ] API Hook 基础测试 (模拟请求成功和失败场景)
+
+**测试工具**: Jest + React Native Testing Library
+**测试文件位置**: `src/**/__tests__/` 或 `src/**/*.test.tsx`
+
+**测试示例结构**:
+```typescript
+// src/screens/__tests__/HomeScreen.test.tsx
+import React from 'react';
+import { render, screen } from '@testing-library/react-native';
+import HomeScreen from '../HomeScreen';
+
+describe('HomeScreen', () => {
+  it('should render without crashing', () => {
+    render(<HomeScreen />);
+    expect(screen.getByText(/home/i)).toBeTruthy();
+  });
+
+  it('should show loading state initially', () => {
+    render(<HomeScreen />);
+    expect(screen.getByTestId('loading-indicator')).toBeTruthy();
+  });
+});
+
+// src/components/ui/__tests__/Button.test.tsx
+import React from 'react';
+import { render, fireEvent } from '@testing-library/react-native';
+import Button from '../Button';
+
+describe('Button', () => {
+  it('should call onPress when pressed', () => {
+    const onPress = jest.fn();
+    const { getByText } = render(<Button onPress={onPress}>Click</Button>);
+
+    fireEvent.press(getByText('Click'));
+    expect(onPress).toHaveBeenCalled();
+  });
+
+  it('should be disabled when loading', () => {
+    const onPress = jest.fn();
+    const { getByText } = render(<Button onPress={onPress} loading>Click</Button>);
+
+    fireEvent.press(getByText('Click'));
+    expect(onPress).not.toHaveBeenCalled();
+  });
+});
+```
+
+**package.json 测试配置**:
+```json
+{
+  "scripts": {
+    "test": "jest"
+  },
+  "devDependencies": {
+    "jest": "^29.0.0",
+    "@testing-library/react-native": "^12.0.0",
+    "@testing-library/jest-native": "^5.4.0"
+  }
+}
+```
+
+### 测试覆盖率目标 (MVP 阶段)
+
+**不要求**:
+- 100% 代码覆盖率
+- 集成测试或 E2E 测试
+- 复杂的 Mock 和 Stub
+
+**只要求**:
+- 关键路径可运行 (Happy Path)
+- 基本的错误处理验证
+- 冒烟测试 (Smoke Test) 保证应用能启动
+
+### 测试运行要求
+
+- [ ] 后端测试必须能通过 `npm test` 运行
+- [ ] 前端测试必须能通过 `npm test` 运行
+- [ ] 所有测试在 CI 环境下能通过 (不依赖本地配置)
+- [ ] 测试时间不超过 30 秒 (MVP 阶段)
+
+---
+
+## API 文档生成 (Swagger/OpenAPI)
+
+后端必须生成可浏览的 API 文档，让前端开发者和测试人员无需阅读代码即可了解接口定义。
+
+### 必须实现
+
+**依赖安装**:
+```json
+{
+  "dependencies": {
+    "swagger-ui-express": "^5.0.0",
+    "swagger-jsdoc": "^6.2.0"
+  },
+  "devDependencies": {
+    "@types/swagger-ui-express": "^4.1.0",
+    "@types/swagger-jsdoc": "^6.0.0"
+  }
+}
+```
+
+**Swagger 配置** (`src/config/swagger.ts`):
+```typescript
+import swaggerJsdoc from 'swagger-jsdoc';
+
+const options: swaggerJsdoc.Options = {
+  definition: {
+    openapi: '3.0.0',
+    info: {
+      title: 'API Documentation',
+      version: '1.0.0',
+      description: 'MVP 后端 API 文档',
+    },
+    servers: [
+      {
+        url: 'http://localhost:3000',
+        description: '开发环境',
+      },
+    ],
+    components: {
+      schemas: {
+        // 定义通用响应格式
+        SuccessResponse: {
+          type: 'object',
+          properties: {
+            success: { type: 'boolean', example: true },
+            data: { type: 'object' },
+          },
+        },
+        ErrorResponse: {
+          type: 'object',
+          properties: {
+            success: { type: 'boolean', example: false },
+            error: {
+              type: 'object',
+              properties: {
+                message: { type: 'string' },
+                details: { type: 'object' },
+              },
+            },
+          },
+        },
+      },
+    },
+  },
+  apis: ['./src/routes/*.ts'], // 扫描路由文件中的注释
+};
+
+export const swaggerSpec = swaggerJsdoc(options);
+```
+
+**路由注册** (`src/app.ts`):
+```typescript
+import swaggerUi from 'swagger-ui-express';
+import { swaggerSpec } from './config/swagger';
+
+// Swagger UI
+app.use('/api-docs', swaggerUi.serve, swaggerUi.setup(swaggerSpec));
+
+// JSON 格式的 OpenAPI spec
+app.get('/api-docs.json', (req, res) => {
+  res.json(swaggerSpec);
+});
+```
+
+### 路由注释格式
+
+每个 API 端点必须添加 JSDoc 注释描述：
+
+```typescript
+/**
+ * @swagger
+ * /api/items:
+ *   get:
+ *     summary: 获取项目列表
+ *     tags: [Items]
+ *     parameters:
+ *       - in: query
+ *         name: page
+ *         schema:
+ *           type: integer
+ *           default: 1
+ *         description: 页码
+ *       - in: query
+ *         name: limit
+ *         schema:
+ *           type: integer
+ *           default: 20
+ *         description: 每页数量
+ *     responses:
+ *       200:
+ *         description: 成功
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 success:
+ *                   type: boolean
+ *                 data:
+ *                   type: array
+ *                   items:
+ *                     $ref: '#/components/schemas/Item'
+ *       500:
+ *         description: 服务器错误
+ */
+router.get('/', itemController.list);
+
+/**
+ * @swagger
+ * /api/items:
+ *   post:
+ *     summary: 创建项目
+ *     tags: [Items]
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             required:
+ *               - title
+ *               - amount
+ *             properties:
+ *               title:
+ *                 type: string
+ *                 description: 项目标题
+ *                 example: 午餐
+ *               description:
+ *                 type: string
+ *                 description: 项目描述
+ *               amount:
+ *                 type: number
+ *                 description: 金额
+ *                 example: 25.5
+ *     responses:
+ *       201:
+ *         description: 创建成功
+ *       400:
+ *         description: 参数验证失败
+ */
+router.post('/', itemController.create);
+```
+
+### Schema 定义
+
+为每个数据模型添加 Swagger schema 定义：
+
+```typescript
+/**
+ * @swagger
+ * components:
+ *   schemas:
+ *     Item:
+ *       type: object
+ *       required:
+ *         - id
+ *         - title
+ *         - amount
+ *       properties:
+ *         id:
+ *           type: integer
+ *           description: 唯一标识
+ *         title:
+ *           type: string
+ *           description: 项目标题
+ *         description:
+ *           type: string
+ *           description: 项目描述
+ *         amount:
+ *           type: number
+ *           description: 金额
+ *         createdAt:
+ *           type: string
+ *           format: date-time
+ *           description: 创建时间
+ *         updatedAt:
+ *           type: string
+ *           format: date-time
+ *           description: 更新时间
+ */
+```
+
+### 访问 API 文档
+
+- **Swagger UI**: http://localhost:3000/api-docs
+- **OpenAPI JSON**: http://localhost:3000/api-docs.json
+
+### API 文档检查清单
+
+- [ ] 所有 GET 端点有 Swagger 注释
+- [ ] 所有 POST/PUT 端点有 requestBody 定义
+- [ ] 所有响应状态码有描述
+- [ ] 数据模型有 Schema 定义
+- [ ] 示例数据 (example) 填写正确
+- [ ] Swagger UI 可正常访问
+
+---
+
 ## 后端实现检查清单
 
 在生成后端代码时，必须逐项确认以下要求：
@@ -150,6 +523,7 @@ description: "在已有UI结构和技术架构基础上生成可运行的前后�
 ├── .env.example          # 必须
 ├── .gitignore            # 必须
 ├── README.md             # 必须
+├── GETTING_STARTED.md    # 必须 (快速启动指南)
 ├── prisma/
 │   ├── schema.prisma     # 必须
 │   └── seed.ts           # 推荐
@@ -162,7 +536,8 @@ description: "在已有UI结构和技术架构基础上生成可运行的前后�
     ├── routes/           # 必须
     ├── controllers/      # 必须
     ├── services/         # 必须
-    └── validators/       # 必须
+    ├── validators/       # 必须
+    └── __tests__/        # 必须 (基础测试)
 ```
 
 ### 前端 (`artifacts/client/`)
@@ -174,6 +549,7 @@ description: "在已有UI结构和技术架构基础上生成可运行的前后�
 ├── .env.example          # 必须
 ├── .gitignore            # 必须
 ├── README.md             # 必须
+├── GETTING_STARTED.md    # 必须 (快速启动指南)
 ├── App.tsx               # 必须
 └── src/
     ├── config/           # 必须
@@ -183,7 +559,278 @@ description: "在已有UI结构和技术架构基础上生成可运行的前后�
     ├── navigation/       # 必须
     ├── screens/          # 必须
     ├── styles/           # 必须
-    └── types/            # 必须
+    ├── types/            # 必须
+    └── **/__tests__/     # 必须 (基础测试)
+```
+
+---
+
+## 快速启动指南 (GETTING_STARTED.md)
+
+每个项目必须包含一个开发者友好的快速启动文档，让新成员能在 10 分钟内运行项目。
+
+### 后端快速启动模板
+
+**`artifacts/backend/GETTING_STARTED.md`**:
+
+```markdown
+# 快速启动指南
+
+本文档帮助开发者在本地环境快速运行后端服务。
+
+## 前置条件
+
+确保已安装以下工具:
+
+- [ ] Node.js >= 18 (`node -v`)
+- [ ] npm >= 9 (`npm -v`)
+- [ ] Git (`git --version`)
+
+## 5 分钟启动
+
+### 1. 克隆项目
+
+```bash
+git clone [repository-url]
+cd backend
+```
+
+### 2. 安装依赖
+
+```bash
+npm install
+```
+
+### 3. 配置环境变量
+
+```bash
+cp .env.example .env
+```
+
+打开 `.env` 文件，默认配置已可用于本地开发:
+- `PORT`: API 端口 (默认 3000)
+- `DATABASE_URL`: SQLite 数据库路径
+
+### 4. 初始化数据库
+
+```bash
+# 生成 Prisma Client
+npx prisma generate
+
+# 创建数据库并应用迁移
+npx prisma migrate dev
+
+# (可选) 填充演示数据
+npm run db:seed
+```
+
+### 5. 启动服务
+
+```bash
+npm run dev
+```
+
+**成功!** 服务运行在 http://localhost:3000
+
+### 验证安装
+
+```bash
+# 健康检查
+curl http://localhost:3000/health
+
+# 应返回
+# {"status":"ok","timestamp":"..."}
+```
+
+---
+
+## 常用命令
+
+| 命令 | 说明 |
+|------|------|
+| `npm run dev` | 启动开发服务器 (热重载) |
+| `npm run build` | 构建生产版本 |
+| `npm start` | 启动生产服务器 |
+| `npm test` | 运行测试 |
+| `npm run db:studio` | 打开 Prisma Studio |
+| `npm run db:seed` | 填充种子数据 |
+
+---
+
+## 常见问题
+
+### Q: 端口 3000 被占用?
+
+```bash
+# 查看占用进程
+lsof -i :3000  # macOS/Linux
+netstat -ano | findstr :3000  # Windows
+
+# 或修改 .env 中的 PORT
+PORT=3001
+```
+
+### Q: Prisma 迁移失败?
+
+```bash
+# 重置数据库
+npx prisma migrate reset
+
+# 或手动删除数据库文件
+rm prisma/dev.db
+npx prisma migrate dev
+```
+
+### Q: 依赖安装失败?
+
+```bash
+# 清除缓存重试
+rm -rf node_modules package-lock.json
+npm cache clean --force
+npm install
+```
+
+---
+
+## 下一步
+
+- [ ] 阅读 `README.md` 了解项目架构
+- [ ] 运行 `npm test` 查看测试覆盖
+- [ ] 使用 `npx prisma studio` 查看数据库
+```
+
+### 前端快速启动模板
+
+**`artifacts/client/GETTING_STARTED.md`**:
+
+```markdown
+# 快速启动指南
+
+本文档帮助开发者在本地环境快速运行移动应用。
+
+## 前置条件
+
+确保已安装以下工具:
+
+- [ ] Node.js >= 18 (`node -v`)
+- [ ] npm >= 9 (`npm -v`)
+- [ ] Expo CLI (`npx expo --version`)
+- [ ] (iOS) Xcode + iOS Simulator
+- [ ] (Android) Android Studio + Android Emulator
+- [ ] (Web) 现代浏览器
+
+## 5 分钟启动
+
+### 1. 克隆项目
+
+```bash
+git clone [repository-url]
+cd client
+```
+
+### 2. 安装依赖
+
+```bash
+npm install
+```
+
+### 3. 配置环境变量
+
+```bash
+cp .env.example .env
+```
+
+打开 `.env` 文件:
+- `EXPO_PUBLIC_API_URL`: 后端 API 地址 (默认 http://localhost:3000)
+
+**注意**: 确保后端服务已启动!
+
+### 4. 启动应用
+
+```bash
+npm start
+```
+
+Metro Bundler 启动后，选择运行平台:
+- 按 `i` - iOS 模拟器
+- 按 `a` - Android 模拟器
+- 按 `w` - Web 浏览器
+
+### 5. 使用 Expo Go 在真机测试
+
+1. 手机下载 Expo Go 应用
+2. 扫描终端中显示的二维码
+3. 应用会在手机上运行
+
+**注意**: 真机测试时需修改 `EXPO_PUBLIC_API_URL` 为电脑的局域网 IP
+
+---
+
+## 常用命令
+
+| 命令 | 说明 |
+|------|------|
+| `npm start` | 启动 Metro Bundler |
+| `npm run ios` | 直接启动 iOS 模拟器 |
+| `npm run android` | 直接启动 Android 模拟器 |
+| `npm run web` | 启动 Web 版本 |
+| `npm test` | 运行测试 |
+| `npm run lint` | 代码检查 |
+
+---
+
+## 常见问题
+
+### Q: Metro Bundler 启动失败?
+
+```bash
+# 清除缓存重启
+npx expo start -c
+```
+
+### Q: iOS 模拟器无法启动?
+
+```bash
+# 检查 Xcode 命令行工具
+xcode-select --install
+
+# 重置模拟器
+xcrun simctl erase all
+```
+
+### Q: Android 模拟器无法连接?
+
+```bash
+# 检查 ADB 连接
+adb devices
+
+# 重启 ADB 服务
+adb kill-server
+adb start-server
+```
+
+### Q: 无法连接后端 API?
+
+1. 确认后端已启动: `curl http://localhost:3000/health`
+2. 检查 `.env` 中的 `EXPO_PUBLIC_API_URL`
+3. 如使用真机，改为电脑局域网 IP (如 `http://192.168.1.100:3000`)
+
+### Q: 依赖安装失败?
+
+```bash
+# 清除缓存重试
+rm -rf node_modules package-lock.json
+npm cache clean --force
+npm install
+```
+
+---
+
+## 下一步
+
+- [ ] 阅读 `README.md` 了解项目架构
+- [ ] 运行 `npm test` 查看测试覆盖
+- [ ] 修改 `src/styles/theme.ts` 自定义主题
 ```
 
 ---
@@ -199,6 +846,205 @@ description: "在已有UI结构和技术架构基础上生成可运行的前后�
 * **NEVER** 忽略 TypeScript 类型错误；
 * **NEVER** 在组件中直接调用 API，应通过 Hook 或 Service；
 * **NEVER** 使用 `console.log` 作为错误处理，应使用错误边界或统一错误处理。
+
+---
+
+## 安全检查清单
+
+即使是 MVP 阶段，也必须遵循基本的安全实践，防止常见的安全漏洞。
+
+### 后端安全要求
+
+#### 1. 输入验证和清理
+
+**必须**:
+- [ ] 所有用户输入使用 Zod 验证
+- [ ] 验证数据类型、长度和格式
+- [ ] 对字符串输入进行长度限制
+
+```typescript
+// ✅ 好
+const createItemSchema = z.object({
+  title: z.string().min(1).max(100),
+  description: z.string().max(500).optional(),
+  amount: z.number().positive().max(1000000),
+});
+
+// ❌ 避免
+const createItem = (data: any) => {
+  // 直接使用未验证的输入
+  return prisma.item.create({ data });
+};
+```
+
+#### 2. SQL 注入防护
+
+**必须**:
+- [ ] 使用 Prisma ORM (自动参数化查询)
+- [ ] 禁止字符串拼接 SQL
+- [ ] 禁止使用 `$queryRawUnsafe`
+
+```typescript
+// ✅ 好 - Prisma 自动参数化
+const items = await prisma.item.findMany({
+  where: { title: { contains: searchTerm } },
+});
+
+// ❌ 绝对禁止 - SQL 注入风险
+const items = await prisma.$queryRawUnsafe(
+  `SELECT * FROM items WHERE title LIKE '%${searchTerm}%'`
+);
+```
+
+#### 3. XSS 防护
+
+**必须**:
+- [ ] 响应头设置 `Content-Type: application/json`
+- [ ] 禁止直接渲染用户输入为 HTML
+- [ ] 使用 helmet 中间件
+
+```typescript
+// ✅ 好 - 使用 helmet
+import helmet from 'helmet';
+app.use(helmet());
+
+// 设置内容类型
+app.use(express.json({ type: 'application/json' }));
+```
+
+#### 4. CORS 配置
+
+**必须**:
+- [ ] 明确配置允许的来源
+- [ ] 生产环境禁止使用 `origin: '*'`
+- [ ] 限制允许的 HTTP 方法
+
+```typescript
+// ✅ 好 - 明确的 CORS 配置
+import cors from 'cors';
+
+const corsOptions = {
+  origin: process.env.CORS_ORIGINS?.split(',') || ['http://localhost:3000'],
+  methods: ['GET', 'POST', 'PUT', 'DELETE'],
+  allowedHeaders: ['Content-Type', 'Authorization'],
+  credentials: true,
+};
+
+app.use(cors(corsOptions));
+
+// ❌ 避免 - 过于宽松
+app.use(cors()); // 允许所有来源
+```
+
+#### 5. Rate Limiting
+
+**推荐** (MVP 阶段可简化):
+```typescript
+import rateLimit from 'express-rate-limit';
+
+const limiter = rateLimit({
+  windowMs: 15 * 60 * 1000, // 15 分钟
+  max: 100, // 每个 IP 最多 100 个请求
+  message: { success: false, error: { message: 'Too many requests' } },
+});
+
+app.use('/api/', limiter);
+```
+
+#### 6. 敏感信息保护
+
+**必须**:
+- [ ] 环境变量存储敏感配置
+- [ ] `.env` 文件不提交到 Git
+- [ ] 提供 `.env.example` 模板
+- [ ] 生产环境隐藏错误详情
+
+```typescript
+// ✅ 好 - 使用环境变量
+const config = {
+  port: process.env.PORT || 3000,
+  databaseUrl: process.env.DATABASE_URL,
+  jwtSecret: process.env.JWT_SECRET, // (未来使用)
+};
+
+// 验证必要的环境变量
+const envSchema = z.object({
+  DATABASE_URL: z.string().min(1),
+  PORT: z.string().optional(),
+});
+
+envSchema.parse(process.env);
+```
+
+**.gitignore 必须包含**:
+```
+.env
+.env.local
+.env.production
+*.pem
+*.key
+```
+
+### 前端安全要求
+
+#### 1. 敏感数据存储
+
+**必须**:
+- [ ] 不在 AsyncStorage 存储敏感数据 (如密码、token)
+- [ ] 使用 expo-secure-store 存储敏感信息
+- [ ] 不在代码中硬编码密钥
+
+```typescript
+// ✅ 好 - 使用安全存储 (如需认证)
+import * as SecureStore from 'expo-secure-store';
+
+await SecureStore.setItemAsync('token', authToken);
+
+// ❌ 避免 - 不安全的存储
+await AsyncStorage.setItem('token', authToken);
+```
+
+#### 2. API 通信
+
+**必须**:
+- [ ] 仅通过 HTTPS 通信 (生产环境)
+- [ ] 不在 URL 中传递敏感参数
+- [ ] 设置请求超时
+
+```typescript
+// ✅ 好
+const apiClient = axios.create({
+  baseURL: process.env.EXPO_PUBLIC_API_URL,
+  timeout: 10000,
+  headers: {
+    'Content-Type': 'application/json',
+  },
+});
+```
+
+#### 3. 输入验证
+
+**必须**:
+- [ ] 客户端输入验证 (作为用户体验)
+- [ ] 不依赖客户端验证作为安全措施 (服务端必须再次验证)
+
+### 安全检查清单摘要
+
+生成代码前确认:
+
+**后端**:
+- [ ] 使用 Zod 验证所有输入
+- [ ] 使用 Prisma (防止 SQL 注入)
+- [ ] 使用 helmet 中间件
+- [ ] 配置 CORS 白名单
+- [ ] 敏感信息使用环境变量
+- [ ] .env 在 .gitignore 中
+- [ ] 生产环境隐藏错误详情
+
+**前端**:
+- [ ] API URL 使用环境变量
+- [ ] 不硬编码敏感信息
+- [ ] 设置请求超时
 
 ---
 
