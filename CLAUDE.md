@@ -92,7 +92,8 @@ Skills 是可复用的知识模块 (`skills/*/skill.md`),包含:
 ├── pipeline.yaml              # 流水线定义文件
 ├── config.yaml                # 项目配置文件（可选）
 ├── agents/                    # Agent 定义
-│   ├── orchestrator.checkpoint.md
+│   ├── orchestrator.checkpoint.md  # 调度器核心定义
+│   ├── orchestrator-implementation.md  # 调度器实现指南
 │   ├── bootstrap.agent.md
 │   ├── prd.agent.md
 │   ├── ui.agent.md
@@ -101,17 +102,25 @@ Skills 是可复用的知识模块 (`skills/*/skill.md`),包含:
 │   ├── validation.agent.md    # 代码验证 Agent
 │   └── preview.agent.md
 ├── skills/                    # 可复用技能模块
-│   ├── prd/skill.md
-│   ├── ui/skill.md
-│   ├── tech/skill.md
-│   ├── code/skill.md
+│   ├── bootstrap/skill.md     # 产品想法结构化
+│   ├── prd/skill.md           # PRD 生成
+│   ├── ui/skill.md            # UI 设计
+│   ├── tech/skill.md          # 技术架构 + 数据库迁移
+│   ├── code/skill.md          # 代码生成 + 测试 + 日志
 │   │   └── references/        # 代码生成参考模板
 │   │       ├── backend-template.md   # 生产就绪后端模板
 │   │       └── frontend-template.md  # 生产就绪前端模板
-│   └── preview/skill.md
+│   └── preview/skill.md       # 部署配置 + 快速启动指南
 ├── policies/                  # 策略文档
 │   ├── capability.matrix.md   # 权限矩阵
-│   └── failure.policy.md      # 失败处理策略
+│   ├── failure.policy.md      # 失败处理策略 (含恢复指南)
+│   ├── error-codes.md         # 统一错误码规范
+│   ├── code-standards.md      # 代码规范
+│   ├── pr-template.md         # PR 模板和代码审查清单
+│   └── changelog.md           # Changelog 生成规范
+├── templates/                 # 配置模板
+│   ├── cicd-github-actions.md # CI/CD 配置 (GitHub Actions)
+│   └── git-hooks-husky.md     # Git Hooks 配置 (Husky)
 ├── input/                     # 用户输入 (由 bootstrap 生成)
 │   └── idea.md
 └── artifacts/                 # 各阶段产物
@@ -162,11 +171,31 @@ Skills 是可复用的知识模块 (`skills/*/skill.md`),包含:
 - 禁止硬编码敏感信息
 - 输出必须包含 package.json 和 README
 
+**生成应用必需包含**:
+- **测试框架**: 后端 Vitest,前端 Jest + React Testing Library
+- **种子数据**: `prisma/seed.ts` 用于开发环境数据填充
+- **API 文档**: Swagger/OpenAPI 规范 (`docs/api-spec.yaml`)
+- **统一错误码**: 遵循 `policies/error-codes.md` 规范
+- **日志和监控**: 结构化日志 (winston/pino) + 健康检查端点
+- **安全检查清单**: 输入验证、SQL 注入防护、CORS 配置等
+- **性能优化**: 数据库索引、缓存策略、查询优化
+
+### Tech Agent 特殊要求
+- 必须包含数据库迁移策略 (Prisma Migrate)
+- 提供 SQLite → PostgreSQL 迁移指南
+- 包含性能优化建议 (索引、查询优化)
+
 ### UI Agent 特殊要求
 - 页面数量不超过 3 页
 - 选择极端鲜明的审美方向,避免常见 AI 风格 (Inter 字体、紫色渐变等)
 - 预览原型必须可在浏览器中打开
 - 保持移动优先设计
+
+### Preview Agent 特殊要求
+- 生成 `GETTING_STARTED.md` 快速启动指南
+- 包含 Docker 部署配置 (docker-compose.yml)
+- 提供 CI/CD 配置参考 (GitHub Actions)
+- 包含 Git Hooks 配置参考 (Husky)
 
 ## 工作流程
 
@@ -189,3 +218,53 @@ Skills 是可复用的知识模块 (`skills/*/skill.md`),包含:
 - **failed** - 检测到失败,需要人工介入
 
 只有 Sisyphus 有权限更新状态。
+
+## 质量保证和开发工作流
+
+### 代码规范 (code-standards.md)
+- TypeScript 编码规范和最佳实践
+- 文件结构和命名约定
+- 注释和文档要求
+- Git 提交消息规范 (Conventional Commits)
+
+### 错误处理 (error-codes.md)
+- 统一错误码结构: `[MODULE]_[ERROR_TYPE]_[SPECIFIC]`
+- 标准错误类型: VALIDATION, NOT_FOUND, FORBIDDEN, CONFLICT, INTERNAL_ERROR
+- 前后端错误码映射和用户友好提示
+
+### 测试策略
+- **后端**: Vitest 单元测试 + 集成测试
+- **前端**: Jest + React Testing Library
+- 测试覆盖率要求 > 60%
+- 关键路径必须有测试
+
+### 数据库管理
+- **开发环境**: SQLite + 种子数据 (`prisma/seed.ts`)
+- **生产环境**: PostgreSQL
+- **迁移策略**: Prisma Migrate (dev/deploy/reset)
+- 提供 SQLite → PostgreSQL 迁移指南
+
+### CI/CD 流水线
+- **GitHub Actions** 自动化测试和构建
+- **后端 CI**: lint, type-check, test, build
+- **前端 CI**: lint, type-check, test, web build, EAS preview
+- **部署流水线**: Railway (后端), Netlify (前端), App Store/Play Store (移动端)
+
+### Git Hooks (Husky)
+- **pre-commit**: lint-staged + type-check
+- **commit-msg**: commitlint 验证提交消息格式
+- **pre-push**: 运行测试 (可选)
+
+### 代码审查
+- PR 模板 (`.github/PULL_REQUEST_TEMPLATE.md`)
+- 10 维度代码审查清单:
+  - 功能完整性、代码质量、测试覆盖
+  - 安全性、性能、文档完整性
+  - 错误处理、可维护性、一致性、向后兼容
+
+### Changelog 管理
+- 遵循 Keep a Changelog 格式
+- Semantic Versioning (MAJOR.MINOR.PATCH)
+- 与 Conventional Commits 集成
+- 自动化工具: conventional-changelog-cli, release-it
+
