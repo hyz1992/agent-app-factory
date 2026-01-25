@@ -591,3 +591,351 @@ await prisma.$transaction(async (tx) => {
 - **保持简单**: 不因性能优化而过度复杂化架构
 
 遵循这些性能指南可以确保应用在 MVP 阶段有良好的基础性能，同时为未来的优化预留空间。
+
+---
+
+## 数据库迁移指南
+
+正确的数据库迁移策略对于应用的稳定性和可维护性至关重要。
+
+### Prisma 迁移基础
+
+#### 1. 开发环境迁移
+
+**创建迁移**:
+
+```bash
+# 修改 schema.prisma 后，创建新迁移
+npx prisma migrate dev --name add_user_email
+
+# 迁移文件会生成在 prisma/migrations/[timestamp]_[name]/
+```
+
+**常用命令**:
+
+| 命令 | 用途 | 场景 |
+|------|------|------|
+| `prisma migrate dev` | 开发环境迁移 | 本地开发时使用 |
+| `prisma migrate deploy` | 生产环境迁移 | CI/CD 部署时使用 |
+| `prisma migrate reset` | 重置数据库 | 开发环境清空数据 |
+| `prisma migrate status` | 查看迁移状态 | 检查是否有未应用的迁移 |
+| `prisma db push` | 同步 schema (无迁移) | 原型阶段快速迭代 |
+
+#### 2. 生产环境迁移
+
+**部署流程**:
+
+```bash
+# 在生产环境运行
+npx prisma migrate deploy
+
+# 此命令只运行迁移，不会自动生成新迁移
+# 适用于 CI/CD 流水线
+```
+
+**安全检查**:
+```bash
+# 部署前查看待执行的迁移
+npx prisma migrate status
+
+# 确认无误后执行
+npx prisma migrate deploy
+```
+
+### 迁移最佳实践
+
+#### 1. 向后兼容的变更
+
+**推荐**: 先添加新字段，后删除旧字段
+
+```prisma
+// 步骤 1: 添加新字段 (可选)
+model User {
+  id       Int     @id @default(autoincrement())
+  name     String
+  fullName String? // 新增，可选
+}
+
+// 步骤 2: 数据迁移脚本 (单独迁移)
+// 将 name 的值复制到 fullName
+
+// 步骤 3: 使 fullName 必填，删除 name (单独迁移)
+model User {
+  id       Int    @id @default(autoincrement())
+  fullName String
+}
+```
+
+#### 2. 添加新字段
+
+**可选字段 (推荐)**:
+
+```prisma
+model User {
+  id    Int     @id @default(autoincrement())
+  email String
+  phone String? // 可选，不需要默认值
+}
+```
+
+**必填字段 (需要默认值)**:
+
+```prisma
+model User {
+  id        Int      @id @default(autoincrement())
+  email     String
+  createdAt DateTime @default(now()) // 有默认值，可以添加
+}
+```
+
+**必填字段 (无默认值)**:
+
+```sql
+-- 需要分步骤:
+-- 1. 先添加为可选
+-- 2. 填充数据
+-- 3. 修改为必填
+
+-- prisma/migrations/xxx_add_phone/migration.sql
+ALTER TABLE "User" ADD COLUMN "phone" TEXT;
+UPDATE "User" SET "phone" = 'unknown' WHERE "phone" IS NULL;
+ALTER TABLE "User" ALTER COLUMN "phone" SET NOT NULL;
+```
+
+#### 3. 删除字段
+
+**安全删除流程**:
+
+1. 确保代码不再使用该字段
+2. 部署代码变更
+3. 等待观察期（建议 1-2 周）
+4. 删除数据库字段
+
+```prisma
+// 步骤 1: 标记字段为 @deprecated (注释)
+model User {
+  id    Int    @id @default(autoincrement())
+  email String
+  // @deprecated 将在 v2.0 删除
+  phone String?
+}
+
+// 步骤 2: 确认代码不再使用后，删除字段
+model User {
+  id    Int    @id @default(autoincrement())
+  email String
+}
+```
+
+#### 4. 重命名字段
+
+**推荐方式**: 添加 → 迁移数据 → 删除
+
+```prisma
+// 不推荐直接重命名，可能导致数据丢失
+
+// 推荐分步骤:
+// 1. 添加新字段
+model User {
+  id       Int    @id @default(autoincrement())
+  name     String // 旧字段
+  fullName String? // 新字段
+}
+
+// 2. 数据迁移脚本
+UPDATE "User" SET "fullName" = "name";
+
+// 3. 删除旧字段
+model User {
+  id       Int    @id @default(autoincrement())
+  fullName String
+}
+```
+
+### 数据迁移脚本
+
+对于复杂的数据转换，创建独立的迁移脚本:
+
+**`prisma/migrations/scripts/migrate_user_names.ts`**:
+
+```typescript
+import { PrismaClient } from '@prisma/client';
+
+const prisma = new PrismaClient();
+
+async function main() {
+  console.log('开始迁移用户名...');
+
+  // 批量更新，避免内存问题
+  const batchSize = 100;
+  let offset = 0;
+  let processed = 0;
+
+  while (true) {
+    const users = await prisma.user.findMany({
+      where: { fullName: null },
+      take: batchSize,
+      skip: offset,
+    });
+
+    if (users.length === 0) break;
+
+    await Promise.all(
+      users.map((user) =>
+        prisma.user.update({
+          where: { id: user.id },
+          data: { fullName: user.name },
+        })
+      )
+    );
+
+    processed += users.length;
+    console.log(`已处理 ${processed} 条记录`);
+    offset += batchSize;
+  }
+
+  console.log('迁移完成');
+}
+
+main()
+  .catch(console.error)
+  .finally(() => prisma.$disconnect());
+```
+
+### SQLite → PostgreSQL 迁移
+
+MVP 阶段使用 SQLite，生产环境迁移到 PostgreSQL:
+
+#### 1. 修改 schema.prisma
+
+```prisma
+// 开发环境
+datasource db {
+  provider = "sqlite"
+  url      = "file:./dev.db"
+}
+
+// 生产环境
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+```
+
+#### 2. 使用环境变量切换
+
+**`schema.prisma`**:
+
+```prisma
+datasource db {
+  provider = env("DB_PROVIDER") // sqlite 或 postgresql
+  url      = env("DATABASE_URL")
+}
+```
+
+**.env (开发)**:
+```
+DB_PROVIDER=sqlite
+DATABASE_URL=file:./dev.db
+```
+
+**.env (生产)**:
+```
+DB_PROVIDER=postgresql
+DATABASE_URL=postgresql://user:password@host:5432/database
+```
+
+#### 3. 数据迁移步骤
+
+```bash
+# 1. 导出 SQLite 数据
+sqlite3 prisma/dev.db .dump > backup.sql
+
+# 2. 修改 provider 为 postgresql
+# 3. 创建 PostgreSQL 数据库
+# 4. 运行迁移
+npx prisma migrate deploy
+
+# 5. 导入数据 (需要转换 SQL 语法)
+# 或使用 Prisma 脚本导入
+```
+
+### 迁移回滚
+
+Prisma 不支持自动回滚，需要手动处理:
+
+#### 1. 开发环境
+
+```bash
+# 重置到最后一个稳定状态
+npx prisma migrate reset
+
+# 这会删除所有数据并重新运行所有迁移
+```
+
+#### 2. 生产环境
+
+**创建回滚迁移**:
+
+```sql
+-- prisma/migrations/xxx_rollback_add_email/migration.sql
+ALTER TABLE "User" DROP COLUMN "newColumn";
+```
+
+**注意**: 生产环境回滚需要谨慎，建议:
+1. 先在预发环境测试
+2. 备份数据库
+3. 选择低峰期执行
+4. 准备回滚方案
+
+### 迁移检查清单
+
+#### 开发阶段
+- [ ] schema 变更经过团队审查
+- [ ] 迁移文件命名清晰 (`add_xxx`, `remove_xxx`)
+- [ ] 数据迁移脚本已测试
+- [ ] 本地运行 `prisma migrate dev` 无错误
+
+#### 部署前
+- [ ] 在预发环境测试迁移
+- [ ] 检查迁移是否向后兼容
+- [ ] 确认数据库已备份
+- [ ] 准备回滚方案
+
+#### 部署时
+- [ ] 使用 `prisma migrate deploy` 而非 `migrate dev`
+- [ ] 监控迁移执行时间
+- [ ] 验证应用功能正常
+- [ ] 检查数据完整性
+
+### 迁移常见问题
+
+**1. 迁移文件冲突**
+
+多人开发时可能产生迁移顺序冲突:
+
+```bash
+# 解决方案: 重新创建迁移
+npx prisma migrate reset
+npx prisma migrate dev --name merge_migrations
+```
+
+**2. 迁移太慢**
+
+大表迁移可能很慢:
+
+```sql
+-- 使用 CONCURRENTLY 创建索引 (PostgreSQL)
+CREATE INDEX CONCURRENTLY "User_email_idx" ON "User"("email");
+```
+
+**3. 数据丢失风险**
+
+```bash
+# 部署前务必备份
+pg_dump -U user database > backup_$(date +%Y%m%d).sql
+```
+
+---
+
+遵循这些迁移指南可以确保数据库变更安全、可控，减少生产环境事故风险。
