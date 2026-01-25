@@ -1,0 +1,101 @@
+# Agent Factory 配置文件
+
+# 技术偏好设置
+preferences:
+  # 后端技术栈
+  backend:
+    language: typescript        # typescript | javascript
+    framework: express          # express | fastify
+    database: sqlite            # sqlite | postgresql | mysql
+    orm: prisma                 # prisma | typeorm
+
+  # 前端技术栈
+  frontend:
+    platform: react-native      # react-native | react-native-web | react
+    state_management: context   # context | zustand | redux-toolkit
+    styling: stylesheet         # stylesheet | styled-components | tailwind
+    navigation: react-navigation # react-navigation | expo-router
+
+  # 代码质量
+  quality:
+    enable_tests: false         # 是否生成测试代码 (MVP 阶段建议 false)
+    enable_linting: true        # 是否配置 ESLint
+    enable_validation: true     # 是否运行代码验证
+    strict_mode: true           # TypeScript 严格模式
+
+  # 部署目标 (影响配置生成)
+  deployment:
+    backend_target: docker      # docker | vercel | railway | render
+    frontend_target: expo       # expo | vercel | netlify
+    database_target: local      # local | supabase | planetscale | railway
+
+# MVP 范围控制
+mvp_constraints:
+  max_pages: 3                  # 最大页面数
+  max_models: 10                # 最大数据模型数
+  max_api_endpoints: 20         # 最大 API 端点数
+  enable_auth: false            # 是否包含认证功能
+  enable_file_upload: false     # 是否支持文件上传
+
+# UI 设计偏好
+ui_preferences:
+  # 审美方向
+  aesthetic: minimalism         # minimalism | brutalism | retro-futurism | japanese-minimal | auto
+
+  # 颜色方案
+  color_scheme:
+    mode: auto                  # auto | light | dark
+    primary_hue: blue           # red | orange | yellow | green | blue | purple | pink | custom
+    # custom_primary: "#2563eb" # 仅当 primary_hue=custom 时使用
+
+  # 排版
+  typography:
+    scale: major-third          # major-second | major-third | perfect-fourth
+    headings_font: auto         # auto | 自定义字体名
+    body_font: auto             # auto | 自定义字体名
+
+# 流水线行为
+pipeline:
+  # 检查点模式
+  checkpoint_mode: manual       # manual | auto
+  # manual: 每个阶段完成后等待确认
+  # auto: 自动继续 (不建议)
+
+  # 失败处理
+  failure_handling:
+    auto_retry: true            # 是否自动重试一次
+    pause_on_failure: true      # 失败后暂停
+    save_failed_artifacts: true # 保存失败产物
+
+# 高级选项 (谨慎修改)
+advanced:
+  # Agent 超时设置 (秒)
+  agent_timeout:
+    bootstrap: 300
+    prd: 600
+    ui: 600
+    tech: 600
+    code: 1800                  # 代码生成可能需要更长时间
+    validation: 600
+    preview: 300
+
+  # 并发控制
+  concurrency:
+    max_parallel_agents: 1      # 同时运行的 Agent 数 (建议保持 1)
+
+  # 缓存设置
+  cache:
+    enable_template_cache: true # 缓存代码模板
+    enable_skill_cache: true    # 缓存 Skill 文档
+
+# 开发者选项
+developer:
+  debug_mode: false             # 开发调试模式
+  verbose_logging: false        # 详细日志
+  save_agent_context: false     # 保存每个 Agent 的完整上下文
+
+# 说明:
+# 1. 此配置文件为可选，如不存在则使用默认值
+# 2. 修改配置后需要重新运行流水线
+# 3. MVP 约束仅为建议，Agent 会尽力遵循但不强制
+# 4. 技术栈选择会影响生成的代码模板和依赖

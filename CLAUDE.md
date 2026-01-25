@@ -10,14 +10,15 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ### 流水线工作流
 
-系统通过 `pipeline.yaml` 定义的 6 个阶段顺序执行:
+系统通过 `pipeline.yaml` 定义的 7 个阶段顺序执行:
 
 1. **bootstrap** - 将用户想法整理为结构化文档 (`input/idea.md`)
 2. **prd** - 生成 MVP 级产品需求文档 (`artifacts/prd/prd.md`)
 3. **ui** - 设计 UI 结构和可预览原型 (`artifacts/ui/`)
 4. **tech** - 制定技术架构和数据模型 (`artifacts/tech/`, `artifacts/backend/prisma/`)
 5. **code** - 生成可运行的前后端代码 (`artifacts/backend/`, `artifacts/client/`)
-6. **preview** - 生成运行说明文档 (`artifacts/preview/README.md`)
+6. **validation** - 验证代码质量（依赖、类型检查、Prisma schema）
+7. **preview** - 生成运行说明文档 (`artifacts/preview/README.md`)
 
 ### 调度器 (Sisyphus Orchestrator)
 
@@ -66,6 +67,7 @@ Skills 是可复用的知识模块 (`skills/*/skill.md`),包含:
 | ui | `artifacts/prd/` | `artifacts/ui/` |
 | tech | `artifacts/prd/` | `artifacts/tech/`, `artifacts/backend/prisma/` |
 | code | `artifacts/ui/`, `artifacts/tech/`, `artifacts/backend/prisma/` | `artifacts/backend/`, `artifacts/client/` |
+| validation | `artifacts/backend/`, `artifacts/client/` | `artifacts/validation/` |
 | preview | `artifacts/backend/`, `artifacts/client/` | `artifacts/preview/` |
 
 **越权处理**: 若 Agent 写入未授权目录,文件会被移至 `artifacts/_untrusted/<stage-id>/`,流水线暂停并等待人工介入。
@@ -88,6 +90,7 @@ Skills 是可复用的知识模块 (`skills/*/skill.md`),包含:
 ```
 .
 ├── pipeline.yaml              # 流水线定义文件
+├── config.yaml                # 项目配置文件（可选）
 ├── agents/                    # Agent 定义
 │   ├── orchestrator.checkpoint.md
 │   ├── bootstrap.agent.md
@@ -95,6 +98,7 @@ Skills 是可复用的知识模块 (`skills/*/skill.md`),包含:
 │   ├── ui.agent.md
 │   ├── tech.agent.md
 │   ├── code.agent.md
+│   ├── validation.agent.md    # 代码验证 Agent
 │   └── preview.agent.md
 ├── skills/                    # 可复用技能模块
 │   ├── prd/skill.md
@@ -102,6 +106,8 @@ Skills 是可复用的知识模块 (`skills/*/skill.md`),包含:
 │   ├── tech/skill.md
 │   ├── code/skill.md
 │   │   └── references/        # 代码生成参考模板
+│   │       ├── backend-template.md   # 生产就绪后端模板
+│   │       └── frontend-template.md  # 生产就绪前端模板
 │   └── preview/skill.md
 ├── policies/                  # 策略文档
 │   ├── capability.matrix.md   # 权限矩阵
@@ -114,6 +120,7 @@ Skills 是可复用的知识模块 (`skills/*/skill.md`),包含:
     ├── tech/
     ├── backend/
     ├── client/
+    ├── validation/            # 代码验证报告
     ├── preview/
     ├── _failed/               # 失败产物归档
     └── _untrusted/            # 越权文件隔离
