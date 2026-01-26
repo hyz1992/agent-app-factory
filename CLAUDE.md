@@ -6,6 +6,12 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 这是一个基于检查点的 AI Agent 工厂系统,通过流水线式工作流自动化生成可运行的 MVP 应用。系统采用多 Agent 协作模式,每个 Agent 负责特定阶段的任务,由 Sisyphus 调度器统一协调。
 
+**重要**: 本项目必须配合 AI 编程助手使用，如:
+- **Claude Code** (claude.ai/code) - 推荐
+- **OpenCode** 或其他支持 Agent 模式的 AI 助手
+
+本项目的 Agent 定义 (`.agent.md`) 和 Skill 文件 (`skill.md`) 都是以 Markdown 格式编写的 AI 指令，需要 AI 助手来解读和执行。人工无法直接运行这些流水线，必须通过 AI 助手作为执行引擎。
+
 ## 核心架构
 
 ### 流水线工作流
