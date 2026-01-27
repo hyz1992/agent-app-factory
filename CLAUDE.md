@@ -42,6 +42,20 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 - 同一时刻只能激活一个 Agent
 - 所有产物必须落盘到 `artifacts/` 目录
 - 不得修改已确认完成的产物
+- **上下文隔离**: Agent 只能从指定输入文件读取信息,不得依赖对话历史（详见 `policies/context-isolation.md`）
+
+### 上下文优化（节省 Token）
+
+流水线支持**分会话执行**以减少 Token 消耗：
+
+1. 每个阶段完成后，状态保存到 `pipeline/state.json`
+2. 用户可新建会话，输入 `请继续执行流水线`
+3. 新会话从上次检查点继续，无需重放历史
+
+**好处**：
+- 每阶段独享干净上下文，避免 Token 累积
+- 适用于所有 AI 助手（Claude Code、OpenCode 等）
+- 支持中断恢复
 
 ### Agent 系统
 
@@ -120,6 +134,7 @@ Skills 是可复用的知识模块 (`skills/*/skill.md`),包含:
 ├── policies/                  # 策略文档
 │   ├── capability.matrix.md   # 权限矩阵
 │   ├── failure.policy.md      # 失败处理策略 (含恢复指南)
+│   ├── context-isolation.md   # 上下文隔离策略 (节省 Token)
 │   ├── error-codes.md         # 统一错误码规范
 │   ├── code-standards.md      # 代码规范
 │   ├── pr-template.md         # PR 模板和代码审查清单
@@ -170,6 +185,7 @@ Skills 是可复用的知识模块 (`skills/*/skill.md`),包含:
 - 不得跳过阶段或修改已完成产物
 - 所有产物必须写入 artifacts/ 目录
 - 遵循能力矩阵的权限限制
+- **上下文隔离**: Agent 只能从指定输入文件读取信息，不得依赖对话历史（详见 `policies/context-isolation.md`）
 
 ### Code Agent 特殊要求
 - **必须阅读模板**: 生成代码前必须完整阅读 `skills/code/references/backend-template.md` 和 `frontend-template.md`
