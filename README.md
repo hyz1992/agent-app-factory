@@ -46,6 +46,26 @@ AI App Factory 是一个基于检查点的智能应用生成系统，通过多 A
 
 > ⚠️ 重要：本项目的 Agent 和 Skill 文件是以 Markdown 格式编写的 AI 指令，需要 AI 助手来解读和执行。人工无法直接运行这些流水线。
 
+**Git Submodule 说明**:
+
+本项目使用 Git Submodule 管理外部依赖（ui-ux-pro-max 设计系统）。克隆仓库后，需要初始化和更新 submodule：
+
+```bash
+# 克隆仓库（首次）
+git clone <repository-url>
+cd agent-factory-v4
+
+# 初始化并更新 submodule
+git submodule update --init --recursive
+```
+
+如果已克隆仓库，可以单独更新 submodule：
+
+```bash
+git submodule update --remote --merge
+```
+
+
 ## 🚀 快速开始
 
 ### 1. 准备产品想法
@@ -82,10 +102,11 @@ AI App Factory 是一个基于检查点的智能应用生成系统，通过多 A
 - 输出：`artifacts/prd/prd.md`
 - 确认内容：用户故事、功能列表、非功能需求
 
-**阶段 3: UI** - 设计 UI 结构和原型
+**阶段 3: UI** - 设计 UI 结构和原型 (🎨 Pro Max 增强)
 - 输入：`artifacts/prd/prd.md`
 - 输出：`artifacts/ui/ui.md` + 可预览的 HTML 原型
 - 确认内容：页面结构、交互流程、视觉设计
+- 特色：集成 ui-ux-pro-max 设计系统（67 种样式、96 种调色板、100 条行业规则）
 
 **阶段 4: Tech** - 设计技术架构
 - 输入：`artifacts/prd/prd.md`
