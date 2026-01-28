@@ -107,14 +107,32 @@ cd artifacts/client && npm run lint --if-present
 - [ ] Prisma Client 导入正确
 - [ ] 存在至少一个测试文件 (`**/*.test.ts`)
 - [ ] package.json 包含 `test` 脚本
+- [ ] **src/index.ts 首行导入 dotenv**: `import 'dotenv/config';`
+- [ ] **dotenv 在 package.json 的 dependencies 中**
 
 **前端：**
 - [ ] 存在 SafeAreaView 使用
 - [ ] 存在 Loading 组件
 - [ ] 存在 Error 处理
 - [ ] API 调用通过封装层
-- [ ] 存在至少一个测试文件 (`**/*.test.tsx`)
-- [ ] package.json 包含 `test` 脚本
+- [ ] 存在至少一个测试文件 (`**/*.test.tsx`) (可选)
+- [ ] package.json 包含 `test` 脚本 (可选)
+- [ ] **React Native Web 依赖**: `react-native-web`, `react-dom`, `@expo/metro-runtime`
+- [ ] **async-storage 依赖**: `@react-native-async-storage/async-storage`
+- [ ] **app.json 不引用不存在的图片文件**
+
+### 7. 常见问题扫描
+
+扫描以下已知问题模式：
+
+| 检查项 | 检测方法 |
+|--------|----------|
+| SQLite 使用 `type` 定义 | 检查 schema.prisma 是否包含 `type Xxx` |
+| 环境变量值有引号 | 检查 .env 是否包含 `="xxx"` 或 `='xxx'` |
+| Prisma 版本是 7.x | 检查 package.json 中 prisma 版本是否 ^7 |
+| 错误的导入路径 | 检查 screens 中是否有 `from './ui/'` (应为 `from '../components/ui/'`) |
+| 缺少 View 导入 | 检查组件是否使用 View 但未导入 |
+| 字符串未终止 | 检查 .tsx 文件是否有连续的引号 |
 
 ---
 

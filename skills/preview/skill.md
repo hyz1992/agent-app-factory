@@ -534,3 +534,49 @@ volumes:
 ---
 
 遵循这些指南，可以使运行说明和部署配置清晰可靠，有助于团队快速启动、演示和部署产品。
+
+---
+
+## 常见问题与解决方案 (生成 artifacts/preview/README.md 时需包含)
+
+### 后端启动问题
+
+| 错误 | 原因 | 解决方案 |
+|------|------|----------|
+| `Invalid environment variables: { DATABASE_URL: [ 'Required' ] }` | .env 文件未加载或格式错误 | 1. 安装 `dotenv`；2. 在 `src/index.ts` 首行添加 `import 'dotenv/config';`；3. 移除 .env 中变量值的引号 |
+| `Error: Prisma schema validation - Composite types are not supported on sqlite` | SQLite 不支持 `type` 定义 | 将 `type` 改为 `String` 类型存储 JSON |
+| `Cannot find module 'xxx'` | 依赖未安装 | 运行 `npm install` |
+
+### 前端启动问题
+
+| 错误 | 原因 | 解决方案 |
+|------|------|----------|
+| `Unable to resolve react-native-web` | 缺少 Web 支持依赖 | 运行 `npx expo install react-native-web react-dom @expo/metro-runtime` |
+| `Unable to resolve @react-native-async-storage/async-storage` | 缺少存储依赖 | 运行 `npm install @react-native-async-storage/async-storage` |
+| `View is not defined` | 组件未正确导入 | 添加 `import { View } from 'react-native';` |
+| `SyntaxError: Unterminated string constant` | 代码语法错误 | 检查是否有连续的引号或未闭合的字符串 |
+| `404 Not Found` API 调用 | 后端未启动或端口错误 | 1. 确认后端运行；2. 检查 .env 中的 `EXPO_PUBLIC_API_URL` |
+
+### AI 推荐问题
+
+| 问题 | 原因 | 解决方案 |
+|------|------|----------|
+| `No response from AI` | API Key 无效或模型名错误 | 检查 .env 中的 `OPENAI_API_KEY` 和 `OPENAI_MODEL` |
+| 总是推荐同一种菜系 | AI 提示词不够多样化 | 增加 `temperature` 参数，改进提示词要求多样化 |
+
+### 快速修复命令
+
+```bash
+# 后端 - 安装缺失依赖
+cd artifacts/backend
+npm install dotenv
+npm install
+
+# 前端 - 安装 Web 支持依赖
+cd artifacts/client
+npx expo install react-native-web react-dom @expo/metro-runtime
+npm install @react-native-async-storage/async-storage
+
+# 重启服务
+# 按 Ctrl+C 停止，然后重新运行 npm run dev / npm start
+```

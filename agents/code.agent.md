@@ -28,6 +28,50 @@
 * **禁止** 添加认证、授权或复杂状态管理；
 * 输出文件应清晰可运行，包括 `package.json`、`README` 和必要的脚本。
 
+---
+
+## 代码生成检查清单
+
+### 后端必须项
+
+- [ ] **环境变量支持**
+  - 安装 `dotenv` 依赖
+  - 在 `src/index.ts` 顶部添加 `import 'dotenv/config';`
+  - 提供 `.env.example` 文件
+
+- [ ] **依赖版本锁定**
+  - Prisma 锁定到 5.x：`"@prisma/client": "5.22.0"`, `"prisma": "5.22.0"`
+
+- [ ] **类型定义**
+  - 对于 JSON 字段，在 `src/types/index.ts` 中定义 TypeScript 接口
+  - 服务层正确处理 JSON 序列化/反序列化
+
+### 前端必须项
+
+- [ ] **核心依赖**
+  - React Native Web 支持：`react-native-web`, `react-dom`, `@expo/metro-runtime`
+  - 持久化存储：`@react-native-async-storage/async-storage`
+  - 导航：`@react-navigation/native`, `@react-navigation/native-stack`
+  - 安全区域：`react-native-safe-area-context`
+
+- [ ] **导入路径检查**
+  - 所有组件导入路径正确（相对路径 `../components/xxx`）
+  - `View`、`Text` 等 React Native 组件正确导入
+
+- [ ] **配置文件**
+  - `app.json` 只包含必需配置，移除不存在的图片引用
+  - `.env` 或 `.env.example` 包含 `EXPO_PUBLIC_API_URL`
+
+### 常见错误预防
+
+| 问题 | 原因 | 解决方案 |
+|------|------|----------|
+| `Invalid environment variables` | .env 未加载或格式错误 | 使用 dotenv，移除变量值引号 |
+| `Composite types not supported` | SQLite 不支持 `type` | 使用 String 存储 JSON |
+| `View is not defined` | 缺少 React Native 组件导入 | 添加 `View` 到导入语句 |
+| `Unable to resolve` | 导入路径错误 | 检查相对路径 |
+| `404 Not Found` API | 后端未启动或端口错误 | 确认后端运行，检查 .env 配置 |
+
 ## 操作步骤
 
 1. 阅读 UI Schema、技术方案和数据模型，理解预期功能；

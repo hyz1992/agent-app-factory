@@ -25,6 +25,35 @@
 * 提醒后续阶段哪些部分可扩展，但不在此阶段实现；
 * 输出文件必须写入指定路径，不得修改上游文件。
 
+### 数据库设计约束
+
+**⚠️ SQLite 兼容性要求**（开发环境使用 SQLite）：
+
+1. **禁止使用 Composite types**
+   - SQLite 不支持 Prisma 的 `type` 定义
+   - 必须使用 `String` 类型存储 JSON 字符串，在应用层进行序列化/反序列化
+   - 错误示例：
+     ```prisma
+     type UserProfile {
+       identity String
+       ageRange String
+     }
+     ```
+   - 正确示例：
+     ```prisma
+     model User {
+       profile String  // JSON 字符串: {"identity":"student","ageRange":"18-25"}
+     }
+     ```
+
+2. **JSON 字段注释规范**
+   - 在 schema 中用注释说明 JSON 结构
+   - 在类型定义文件（`src/types/index.ts`）中定义对应的 TypeScript 接口
+
+3. **Prisma 版本锁定**
+   - 必须使用 Prisma 5.x，不使用 7.x（有兼容性问题）
+   - 在 `package.json` 中锁定版本：`"@prisma/client": "5.22.0"`, `"prisma": "5.22.0"`
+
 ## 操作步骤
 
 1. 阅读 PRD，识别核心功能、数据流和约束条件；
