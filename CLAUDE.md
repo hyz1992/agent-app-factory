@@ -32,7 +32,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 - 按顺序执行 pipeline.yaml 定义的各个 Stage
 - 验证每个阶段的输入/输出和退出条件 (exit_criteria)
-- 维护流水线状态 (`pipeline/state.json`)
+- 维护流水线状态 (`.factory/state.json`)
 - 执行权限检查,防止 Agent 越权读写
 - 根据失败策略处理异常情况
 - 在每个检查点暂停,等待人工确认后继续
@@ -48,7 +48,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 流水线支持**分会话执行**以减少 Token 消耗：
 
-1. 每个阶段完成后，状态保存到 `pipeline/state.json`
+1. 每个阶段完成后，状态保存到 `.factory/state.json`
 2. 用户可新建会话，输入 `请继续执行流水线`
 3. 新会话从上次检查点继续，无需重放历史
 
@@ -231,7 +231,7 @@ Skills 是可复用的知识模块 (`skills/*/skill.md`),包含:
 
 ## 状态管理
 
-流水线通过状态机运行,维护在 `pipeline/state.json`:
+流水线通过状态机运行,维护在 `.factory/state.json`:
 
 - **idle** - 等待启动
 - **running** - 正在执行某个 Stage

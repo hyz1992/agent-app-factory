@@ -68,6 +68,24 @@ git submodule update --remote --merge
 
 ## 🚀 快速开始
 
+### 方式 A: 使用 CLI 工具（推荐）
+
+```bash
+# 1. 全局安装 Agent Factory
+npm install -g agent-factory
+
+# 2. 在任意目录初始化项目
+mkdir my-app && cd my-app
+factory init
+
+# 3. 编辑 input/idea.md 写入你的产品想法
+
+# 4. 在 Claude Code 中运行流水线
+factory run
+```
+
+### 方式 B: 直接使用项目模板
+
 ### 1. 准备产品想法
 
 准备一个简单的产品描述，例如：

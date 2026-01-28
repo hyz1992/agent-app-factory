@@ -4,7 +4,7 @@
 
 ## 核心数据结构
 
-### 状态文件 (pipeline/state.json)
+### 状态文件 (.factory/state.json)
 
 ```json
 {
@@ -85,8 +85,8 @@
 
 ```typescript
 function initPipeline(): void {
-  // 检查 pipeline/state.json 是否存在
-  if (!exists('pipeline/state.json')) {
+  // 检查 .factory/state.json 是否存在
+  if (!exists('.factory/state.json')) {
     // 创建初始状态文件
     writeStateFile({
       version: "1.0",
@@ -101,8 +101,8 @@ function initPipeline(): void {
     });
   }
 
-  // 读取 pipeline.yaml
-  const pipeline = readYaml('pipeline.yaml');
+  // 读取 .factory/pipeline.yaml
+  const pipeline = readYaml('.factory/pipeline.yaml');
 
   // 验证 pipeline 结构
   validatePipeline(pipeline);
@@ -336,7 +336,7 @@ async function runPipeline(): Promise<void> {
   initPipeline();
 
   // 2. 读取 pipeline 配置
-  const pipeline = readYaml('pipeline.yaml');
+  const pipeline = readYaml('.factory/pipeline.yaml');
   const stages = pipeline.stages;
 
   // 3. 读取当前状态

@@ -1,0 +1,15 @@
+# Generated artifacts
+/artifacts/
+
+# Factory runtime state (project-specific)
+.factory/state.json
+
+# Node modules
+/node_modules/
+
+# Dependencies
+cli/node_modules/
+
+# IDE
+.vscode/
+.idea/

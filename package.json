@@ -1,0 +1,40 @@
+{
+  "name": "agent-factory",
+  "version": "1.0.0",
+  "description": "AI App Factory - Transform ideas into runnable apps via AI Agents",
+  "author": "Agent Factory Contributors",
+  "license": "MIT",
+  "bin": {
+    "factory": "./cli/bin/factory.js"
+  },
+  "scripts": {
+    "test": "echo \"See README.md for usage\" && exit 0"
+  },
+  "keywords": [
+    "ai",
+    "agent",
+    "factory",
+    "cli",
+    "code-generator",
+    "mvp",
+    "react-native",
+    "express",
+    "prisma"
+  ],
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/yourname/agent-factory-v4.git"
+  },
+  "homepage": "https://github.com/yourname/agent-factory-v4#readme",
+  "engines": {
+    "node": ">=16.0.0"
+  },
+  "dependencies": {
+    "chalk": "^4.1.2",
+    "commander": "^11.0.0",
+    "fs-extra": "^11.1.1",
+    "inquirer": "^8.2.5",
+    "ora": "^5.4.1",
+    "yaml": "^2.3.4"
+  }
+}

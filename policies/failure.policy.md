@@ -248,7 +248,7 @@ Recommended Action:
 - [ ] 网络连接正常 (npm 下载)
 
 ### 状态检查
-- [ ] `pipeline/state.json` 状态正确
+- [ ] `.factory/state.json` 状态正确
 - [ ] 上游 Stage 产物完整
 - [ ] 失败产物已归档到 `_failed/`
 
