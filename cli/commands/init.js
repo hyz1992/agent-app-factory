@@ -14,6 +14,7 @@ const { spawn, execSync } = require('child_process');
 const chalk = require('chalk');
 const ora = require('ora');
 const yaml = require('yaml');
+const { generateClaudeSettings } = require('../utils/claude-settings');
 
 /**
  * Check if directory is already a Factory project
@@ -128,8 +129,8 @@ async function launchClaudeCode(projectDir) {
     console.log(chalk.cyan('Starting Claude Code...'));
 
     // Run claude with prompt as argument
-    // This opens Claude Code and passes the prompt directly
-    spawn('claude', ['--dangerously-skip-permissions', prompt], {
+    // Note: .claude/settings.local.json has been generated with proper permissions
+    spawn('claude', [prompt], {
       cwd: projectDir,
       stdio: 'inherit',
       shell: true,
@@ -339,6 +340,10 @@ module.exports = async function(factoryRoot, projectDir, options) {
       JSON.stringify(state, null, 2),
       'utf8'
     );
+
+    // 5. Generate .claude/settings.local.json for proper permissions
+    spinner.text = 'Generating Claude Code permissions...';
+    await generateClaudeSettings(projectDir);
 
     spinner.succeed('Factory project initialized!');
 
