@@ -347,6 +347,57 @@ module.exports = async function(factoryRoot, projectDir, options) {
 
     spinner.succeed('Factory project initialized!');
 
+    // 6. Install required Claude plugins
+    console.log('');
+    const pluginSpinner = ora('Checking and installing required Claude plugins...').start();
+
+    try {
+      // Check if claude command is available
+      if (!commandExists('claude')) {
+        pluginSpinner.warn('Claude CLI not found - skipping plugin installation');
+        console.log(chalk.yellow('  Install Claude Code to enable plugins: https://claude.ai/code'));
+      } else {
+        // Install superpowers plugin (for bootstrap stage)
+        pluginSpinner.text = 'Installing superpowers plugin...';
+        const superpowersScript = path.join(factoryRoot, 'cli', 'scripts', 'check-and-install-superpowers.js');
+        if (fs.existsSync(superpowersScript)) {
+          try {
+            execSync(`node "${superpowersScript}"`, {
+              cwd: projectDir,
+              stdio: 'pipe'
+            });
+            pluginSpinner.text = 'Installing superpowers plugin... ✓';
+          } catch (e) {
+            pluginSpinner.text = 'Installing superpowers plugin... (failed)';
+            console.log(chalk.yellow('  Note: superpowers plugin installation failed'));
+            console.log(chalk.gray('  The bootstrap stage may prompt you to install it manually'));
+          }
+        }
+
+        // Install ui-ux-pro-max-skill plugin (for ui stage)
+        pluginSpinner.text = 'Installing ui-ux-pro-max-skill plugin...';
+        const uiSkillScript = path.join(factoryRoot, 'cli', 'scripts', 'check-and-install-ui-skill.js');
+        if (fs.existsSync(uiSkillScript)) {
+          try {
+            execSync(`node "${uiSkillScript}"`, {
+              cwd: projectDir,
+              stdio: 'pipe'
+            });
+            pluginSpinner.text = 'Installing ui-ux-pro-max-skill plugin... ✓';
+          } catch (e) {
+            pluginSpinner.text = 'Installing ui-ux-pro-max-skill plugin... (failed)';
+            console.log(chalk.yellow('  Note: ui-ux-pro-max-skill plugin installation failed'));
+            console.log(chalk.gray('  The ui stage may prompt you to install it manually'));
+          }
+        }
+
+        pluginSpinner.succeed('Plugins installed!');
+      }
+    } catch (error) {
+      pluginSpinner.warn('Plugin installation skipped');
+      console.log(chalk.gray('  You can install plugins manually later'));
+    }
+
     // Print success message
     console.log('');
     console.log(chalk.green('Project structure created:'));

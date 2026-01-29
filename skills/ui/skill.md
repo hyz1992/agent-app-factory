@@ -16,24 +16,6 @@ description: "根据PRD生成专业级界面结构和视觉方向。集成 ui-ux
 
 ## 设计系统生成工作流 (ui-ux-pro-max)
 
-### 前置条件
-
-**1. 检查 ui-ux-pro-max-skill 是否存在**
-
-如果 `skills/ui/ui-ux-pro-max-skill/` 目录不存在或为空，说明 Git Submodule 未初始化。请运行以下命令：
-
-```bash
-git submodule update --init --recursive
-```
-
-> ⚠️ 重要：ui-ux-pro-max-skill 是本项目的 Git Submodule，必须初始化后才能使用设计系统生成功能。
-
-**2. 确保 Python 已安装**
-
-```bash
-python --version
-```
-
 ### Step 1: 分析用户需求
 
 从 PRD 和用户请求中提取关键信息:
@@ -44,46 +26,59 @@ python --version
 
 ### Step 2: 生成设计系统 (必需)
 
-**始终使用 `--design-system` 获取完整推荐**:
+通过 `ui-ux-pro-max` 已安装的 Claude 插件获取完整的设计系统推荐：
 
-```bash
-python skills/ui/ui-ux-pro-max-skill/src/ui-ux-pro-max/scripts/search.py "<产品类型> <行业> <关键词>" --design-system [-p "项目名称"]
-```
+**推荐方式：使用 ui-ux-pro-max Skill 工具**
 
-此命令会:
-1. 并行搜索 5 个领域 (产品、样式、颜色、落地页、字体)
+该工具会：
+1. 并行搜索 5 个领域（产品、样式、颜色、落地页、字体）
 2. 应用 `ui-reasoning.csv` 中的推理规则选择最佳匹配
-3. 返回完整设计系统: 模式、样式、颜色、字体、效果
+3. 返回完整设计系统：模式、样式、颜色、字体、效果
 4. 包含需要避免的反模式
 
-**示例:**
-```bash
-python skills/ui/ui-ux-pro-max-skill/src/ui-ux-pro-max/scripts/search.py "beauty spa wellness service" --design-system -p "Serenity Spa"
-```
+**获取的设计系统内容**：
+- 67 种 UI 样式库（极简、玻璃态、黏土态等）
+- 96 种调色板
+- 57 种字体组合
+- 100 条行业推理规则
+- UX 最佳实践指南
+
+**补充搜索**：
+如需更多选项，使用 Skill 工具中的领域搜索功能：
+- `style` - 更多样式选项
+- `color` - 调色板推荐
+- `typography` - 字体组合
+- `landing` - 落地页模式
+- `chart` - 图表推荐
+- `ux` - UX 最佳实践
 
 ### Step 3: 按需补充详细搜索
 
-获取设计系统后，使用领域搜索获取更多细节:
+获取设计系统后，使用 Skill 工具中的领域搜索功能获取更多细节：
 
-```bash
-python skills/ui/ui-ux-pro-max-skill/src/ui-ux-pro-max/scripts/search.py "<关键词>" --domain <领域> [-n <最大结果数>]
-```
-
-| 需求 | 领域 | 示例 |
+| 需求 | 领域 | 用途 |
 |------|------|------|
-| 更多样式选项 | `style` | `--domain style "glassmorphism dark"` |
-| 图表推荐 | `chart` | `--domain chart "real-time dashboard"` |
-| UX 最佳实践 | `ux` | `--domain ux "animation accessibility"` |
-| 替代字体 | `typography` | `--domain typography "elegant luxury"` |
-| 落地页结构 | `landing` | `--domain landing "hero social-proof"` |
+| 更多样式选项 | `style` | 获取 67 种样式中更符合需求的变体 |
+| 图表推荐 | `chart` | 仪表盘、数据展示相关推荐 |
+| UX 最佳实践 | `ux` | 动画、可访问性、交互指南 |
+| 替代字体 | `typography` | 57 种字体组合中的替代方案 |
+| 落地页结构 | `landing` | 落地页布局和结构参考 |
 
 ### Step 4: 获取技术栈指南
 
-```bash
-python skills/ui/ui-ux-pro-max-skill/src/ui-ux-pro-max/scripts/search.py "<关键词>" --stack html-tailwind
-```
+通过 Skill 工具获取特定技术栈的设计实现指南：
 
-可用技术栈: `html-tailwind`, `react`, `nextjs`, `vue`, `svelte`, `swiftui`, `react-native`, `flutter`, `shadcn`, `jetpack-compose`
+可用技术栈：
+- `html-tailwind` - HTML + Tailwind CSS
+- `react` - React 组件库
+- `nextjs` - Next.js 框架
+- `vue` - Vue 框架
+- `svelte` - Svelte 框架
+- `swiftui` - iOS/macOS
+- `react-native` - React Native
+- `flutter` - Flutter
+- `shadcn` - shadcn/ui 组件库
+- `jetpack-compose` - Android Compose
 
 ---
 

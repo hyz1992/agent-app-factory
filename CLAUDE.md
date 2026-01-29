@@ -49,8 +49,8 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 流水线支持**分会话执行**以减少 Token 消耗：
 
 1. 每个阶段完成后，状态保存到 `.factory/state.json`
-2. 用户可新建会话，输入 `请继续执行流水线`
-3. 新会话从上次检查点继续，无需重放历史
+2. 用户新开命令行窗口，执行 `factory continue`
+3. 命令自动启动新的 Claude Code 窗口并从上次检查点继续
 
 **好处**：
 - 每阶段独享干净上下文，避免 Token 累积

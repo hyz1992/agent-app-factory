@@ -34,23 +34,14 @@ async function launchClaudeCode(projectDir, nextStage, completedStages) {
     ? `已完成阶段: ${completedStages.join(', ')}`
     : '开始新流水线';
 
-  const agentFile = nextStage === 'bootstrap' ? 'agents/bootstrap.agent.md'
-    : nextStage === 'prd' ? 'agents/prd.agent.md'
-    : nextStage === 'ui' ? 'agents/ui.agent.md'
-    : nextStage === 'tech' ? 'agents/tech.agent.md'
-    : nextStage === 'code' ? 'agents/code.agent.md'
-    : nextStage === 'validation' ? 'agents/validation.agent.md'
-    : nextStage === 'preview' ? 'agents/preview.agent.md'
-    : 'agents/bootstrap.agent.md';
-
-  const prompt = `请继续执行流水线。${stagesList}，下一步：${nextStage || 'bootstrap'}。
-
-【重要】请首先完整读取 ${agentFile} 文件，然后严格按照文件中 "🚨 首次执行前必须完成" 部分的指示执行。
-
+  const originPrompt = `请继续执行流水线。${stagesList}。
 注意：
 1. 必须先读取对应的 .agent.md 文件
 2. 严格按照文件中的步骤执行，特别是自动检测和安装插件的步骤
 3. Agent 引用的 skills/ 和 policies/ 文件需要先查找 .factory/ 目录，再查找根目录`;
+
+  //TODO 去掉prompt的换行符和空格，避免命令行问题
+  const prompt = originPrompt.split(/\s+/).join('').trim();
 
   // Always regenerate Claude settings to ensure latest permissions
   await generateClaudeSettings(projectDir);

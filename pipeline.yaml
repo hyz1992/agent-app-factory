@@ -15,6 +15,7 @@ stages:
     exit_criteria:
       - idea.md 存在
       - idea.md 描述了一个连贯的产品想法
+      - Agent 已使用 `superpowers:brainstorm` 技能进行深入挖掘（必须在输出中明确说明）
 
   - id: prd
     description: >
@@ -43,6 +44,7 @@ stages:
       - ui.schema.yaml 存在
       - 页面数量不超过 3
       - 预览页面可在浏览器中打开
+      - Agent 已使用 `ui-ux-pro-max` 技能生成设计系统（必须在输出或 ui.schema.yaml 中明确说明）
 
   - id: tech
     description: >

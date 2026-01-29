@@ -20,36 +20,17 @@
 
 ## 设计系统工具
 
-本 Agent 可以使用 **ui-ux-pro-max** 设计系统生成工具：
+本 Agent 使用 **ui-ux-pro-max** 设计系统生成工具，可以：
 
-```bash
-# 生成完整设计系统推荐
-python skills/ui/ui-ux-pro-max-skill/src/ui-ux-pro-max/scripts/search.py "<产品类型> <行业> <关键词>" --design-system [-p "项目名称"]
-
-# 领域搜索
-python skills/ui/ui-ux-pro-max-skill/src/ui-ux-pro-max/scripts/search.py "<关键词>" --domain <style|typography|color|landing|chart|ux>
-
-# 技术栈指南
-python skills/ui/ui-ux-pro-max-skill/src/ui-ux-pro-max/scripts/search.py "<关键词>" --stack html-tailwind
-```
-
-## 数据资源
-
-设计系统数据位于 `skills/ui/ui-ux-pro-max-skill/src/ui-ux-pro-max/data/`:
-
-| 文件 | 内容 |
-|------|------|
-| `styles.csv` | 67 种 UI 样式 |
-| `colors.csv` | 96 种调色板 |
-| `typography.csv` | 57 种字体组合 |
-| `ui-reasoning.csv` | 100 条行业推理规则 |
-| `landing.csv` | 落地页模式 |
-| `ux-guidelines.csv` | UX 最佳实践 |
+- 生成完整设计系统推荐
+- 领域搜索（样式、字体、颜色、落地页、图表等）
+- 技术栈指南
+- 访问 67 种 UI 样式、96 种调色板、57 种字体组合等资源
 
 ## 执行约束
 
 * 读取 PRD，理解用户痛点和场景，确定界面层级和关键流程；
-* **必须** 先运行设计系统生成脚本获取专业推荐，再开始设计；
+* **🚨 强制要求**：必须使用 `ui-ux-pro-max` 技能生成设计系统，不得自行选择样式、颜色、字体。即使你已有设计想法，也必须先使用该技能获取专业推荐；
 * 原型页面数量不得超过 3 页，专注于展示核心使用路径；
 * 使用原生 HTML、CSS 和 JavaScript 创建预览，不使用任何第三方框架；
 * **禁止** 使用 AI 风格配色（紫色/粉色渐变）或字体（Inter、Roboto）；
@@ -60,6 +41,17 @@ python skills/ui/ui-ux-pro-max-skill/src/ui-ux-pro-max/scripts/search.py "<关�
 
 ## 操作步骤
 
+### Step 0: 强制使用 ui-ux-pro-max 设计系统（不可跳过）
+
+**在开始任何设计工作之前，必须先调用 `ui-ux-pro-max` 技能**。
+
+即使你已经有明确的设计想法，也**必须**执行此步骤：
+1. 使用 `ui-ux-pro-max` 技能，提供从 PRD 中提取的产品类型、行业领域、目标用户等信息
+2. 获取技能推荐的：样式、调色板、字体组合、效果、反模式
+3. 将推荐的设计系统应用到后续所有设计决策中
+
+> ⚠️ **警告**：跳过此步骤或自行选择设计系统将被视为未完成 UI 任务。没有使用 `ui-ux-pro-max` 技能的设计输出将被 Orchestrator 拒绝。
+
 ### Step 1: 理解需求
 
 1. 阅读 `artifacts/prd/prd.md`，理解产品目标、场景和核心功能；
@@ -67,10 +59,7 @@ python skills/ui/ui-ux-pro-max-skill/src/ui-ux-pro-max/scripts/search.py "<关�
 
 ### Step 2: 生成设计系统 (必需)
 
-1. 运行设计系统生成脚本：
-   ```bash
-   python skills/ui/ui-ux-pro-max-skill/src/ui-ux-pro-max/scripts/search.py "<产品类型> <行业> <风格关键词>" --design-system -p "<项目名称>"
-   ```
+1. 使用 `ui-ux-pro-max` Skill 工具或相关命令获取完整设计系统推荐；
 2. 获取推荐的：样式、调色板、字体组合、效果、反模式；
 3. 如需更多选项，使用领域搜索补充。
 
@@ -89,13 +78,15 @@ python skills/ui/ui-ux-pro-max-skill/src/ui-ux-pro-max/scripts/search.py "<关�
 ### Step 5: 输出和验证
 
 1. 将所有输出写入 `artifacts/ui/`；
-2. 验证原型可在浏览器中正常打开；
-3. 通知调度器阶段完成。
+2. 在输出消息中明确说明已使用 `ui-ux-pro-max` 技能及获取的设计系统推荐；
+3. 验证原型可在浏览器中正常打开；
+4. 通知调度器阶段完成。
 
 ## 交付前检查清单
 
 在完成设计前，确保：
 
+- [ ] **已使用 `ui-ux-pro-max` 技能生成设计系统**（强制要求）
 - [ ] 未使用 emoji 作为图标（使用 SVG）
 - [ ] 所有可点击元素有 `cursor-pointer`
 - [ ] Hover 状态提供清晰视觉反馈
