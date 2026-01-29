@@ -30,15 +30,8 @@ function commandExists(cmd) {
  * Try to launch Claude Code with continuation prompt
  */
 async function launchClaudeCode(projectDir, nextStage, completedStages) {
-  const stagesList = completedStages.length > 0
-    ? `已完成阶段: ${completedStages.join(', ')}`
-    : '开始新流水线';
 
-  const originPrompt = `请继续执行流水线。${stagesList}。
-注意：
-1. 必须先读取对应的 .agent.md 文件
-2. 严格按照文件中的步骤执行，特别是自动检测和安装插件的步骤
-3. Agent 引用的 skills/ 和 policies/ 文件需要先查找 .factory/ 目录，再查找根目录`;
+  const originPrompt = `请继续执行流水线。`;
 
   //TODO 去掉prompt的换行符和空格，避免命令行问题
   const prompt = originPrompt.split(/\s+/).join('').trim();
