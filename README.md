@@ -46,42 +46,18 @@ AI App Factory 是一个基于检查点的智能应用生成系统，通过多 A
 
 > ⚠️ 重要：本项目的 Agent 和 Skill 文件是以 Markdown 格式编写的 AI 指令，需要 AI 助手来解读和执行。人工无法直接运行这些流水线。
 
-**Git Submodule 说明**:
-
-本项目使用 Git Submodule 管理外部依赖（ui-ux-pro-max 设计系统）。克隆仓库后，需要初始化和更新 submodule：
-
-```bash
-# 克隆仓库（首次）
-git clone <repository-url>
-cd agent-factory-v4
-
-# 初始化并更新 submodule
-git submodule update --init --recursive
-```
-
-如果已克隆仓库，可以单独更新 submodule：
-
-```bash
-git submodule update --remote --merge
-```
-
-
 ## 🚀 快速开始
 
 ### 方式 A: 使用 CLI 工具（推荐）
 
 ```bash
 # 1. 全局安装 Agent Factory
-npm install -g agent-factory
+npm install -g agent-app-factory
 
 # 2. 在任意目录初始化项目
 mkdir my-app && cd my-app
 factory init
 
-# 3. 编辑 input/idea.md 写入你的产品想法
-
-# 4. 在 Claude Code 中运行流水线
-factory run
 ```
 
 ### 方式 B: 直接使用项目模板

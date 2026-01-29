@@ -60,8 +60,14 @@ const resetCmd = require('../commands/reset');
 const continueCmd = require('../commands/continue');
 
 // Version
-const packageJson = require('../package.json');
-program.version(packageJson.version);
+// Note: In production, read from root package.json
+try {
+  const packageJson = require('../../package.json');
+  program.version(packageJson.version);
+} catch (e) {
+  // Fallback version if package.json not found
+  program.version('1.0.0');
+}
 
 // Make factoryRoot available to all commands
 const factoryRoot = getFactoryRoot();

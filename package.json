@@ -1,12 +1,23 @@
 {
-  "name": "agent-factory",
+  "name": "agent-app-factory",
   "version": "1.0.0",
   "description": "AI App Factory - Transform ideas into runnable apps via AI Agents",
   "author": "Agent Factory Contributors",
   "license": "MIT",
+  "main": "cli/index.js",
   "bin": {
-    "factory": "./cli/bin/factory.js"
+    "factory": "cli/bin/factory.js"
   },
+  "files": [
+    "cli",
+    "agents",
+    "skills",
+    "policies",
+    "templates",
+    "pipeline.yaml",
+    "README.md",
+    "LICENSE"
+  ],
   "scripts": {
     "test": "echo \"See README.md for usage\" && exit 0"
   },
