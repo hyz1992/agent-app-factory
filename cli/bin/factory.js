@@ -11,6 +11,7 @@
  *   factory list              - List all Factory projects
  *   factory status            - Show current project status
  *   factory reset             - Reset current project state
+ *   factory continue           - Open new Claude Code session to continue pipeline
  */
 
 const { program } = require('commander');
@@ -56,6 +57,7 @@ const runCmd = require('../commands/run');
 const listCmd = require('../commands/list');
 const statusCmd = require('../commands/status');
 const resetCmd = require('../commands/reset');
+const continueCmd = require('../commands/continue');
 
 // Version
 const packageJson = require('../package.json');
@@ -98,6 +100,12 @@ program
   .description('Reset current project state (keeps artifacts, resets pipeline)')
   .option('-f, --force', 'Skip confirmation')
   .action((options) => resetCmd(process.cwd(), options));
+
+// Continue command
+program
+  .command('continue')
+  .description('Open new Claude Code session to continue pipeline')
+  .action(() => continueCmd(process.cwd()));
 
 // Parse arguments
 program.parse(process.argv);
