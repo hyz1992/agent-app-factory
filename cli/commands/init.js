@@ -415,6 +415,9 @@ module.exports = async function(factoryRoot, projectDir, options) {
     console.log(chalk.gray('    config.yaml'));
     console.log(chalk.gray('    state.json'));
     console.log('');
+    console.log(chalk.cyan('  Project: ') + chalk.white('https://github.com/hyz1992/agent-app-factory'));
+    console.log(chalk.gray('  Welcome to star the repo if you find it helpful.'));
+    console.log('');
 
     // Try to launch AI assistant
     let launched = false;
