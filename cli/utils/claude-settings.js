@@ -234,7 +234,7 @@ function generatePermissions(projectDir) {
         'Bash(find:*)',
         'Bash(grep:*)',
         'Bash(rg:*)',
-        isWindows ? 'Bash(type:*)' : 'Bashless:*)',
+        isWindows ? 'Bash(type:*)' : 'Bash(less:*)',
         'Bash(more:*)'
       ]
     },
