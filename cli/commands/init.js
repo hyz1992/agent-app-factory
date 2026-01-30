@@ -174,16 +174,20 @@ async function launchOpenCode(projectDir) {
   }
 
   // Fallback: try to find OpenCode executable and open project
-  const openCodePaths = [
-    // Windows
-    path.join(process.env.LOCALAPPDATA, 'Programs', 'OpenCode', 'OpenCode.exe'),
-    path.join(process.env.USERPROFILE, 'AppData', 'Local', 'Programs', 'OpenCode', 'OpenCode.exe'),
-    // macOS
-    '/Applications/OpenCode.app/Contents/MacOS/OpenCode',
-    // Linux
-    '/usr/bin/opencode',
-    '/usr/local/bin/opencode',
-  ];
+  // Only include Windows paths on Windows (LOCALAPPDATA/USERPROFILE are undefined on macOS/Linux)
+  const openCodePaths = [];
+  if (process.platform === 'win32') {
+    if (process.env.LOCALAPPDATA) {
+      openCodePaths.push(path.join(process.env.LOCALAPPDATA, 'Programs', 'OpenCode', 'OpenCode.exe'));
+    }
+    if (process.env.USERPROFILE) {
+      openCodePaths.push(path.join(process.env.USERPROFILE, 'AppData', 'Local', 'Programs', 'OpenCode', 'OpenCode.exe'));
+    }
+  } else if (process.platform === 'darwin') {
+    openCodePaths.push('/Applications/OpenCode.app/Contents/MacOS/OpenCode');
+  } else {
+    openCodePaths.push('/usr/bin/opencode', '/usr/local/bin/opencode');
+  }
 
   for (const exePath of openCodePaths) {
     if (fs.existsSync(exePath)) {
