@@ -237,6 +237,14 @@ artifacts/
 - `policies/*.md` - 策略和规范文档
 - `templates/*.md` - 配置模板
 
+## 🙏 特别鸣谢
+
+感谢 **张永生** 的分享与教程资源，本项目作者正是通过学习其内容入门 AI Agent 开发。
+
+- **GitHub**: [vbgate](https://github.com/vbgate)
+- [Learn Open Code](https://learnopencode.com/) — AI Agent 教程
+- [Open Code Docs 中文](https://opencodedocs.com/zh/) — 开源库源码教程合集
+
 ## 🤝 贡献
 
 欢迎贡献新的 Agent、Skill 或改进现有流水线。
