@@ -2,6 +2,49 @@
 
 This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.
 
+## CLI 命令参考
+
+项目安装为全局 CLI 后，可以使用以下命令：
+
+```bash
+# 初始化当前目录为 Factory 项目
+factory init
+
+# 继续执行流水线（启动新的 Claude Code 会话）
+factory continue
+
+# 显示当前项目状态
+factory status
+
+# 列出所有 Factory 项目
+factory list
+
+# 重置当前项目状态（保留 artifacts，重置流水线）
+factory reset
+
+# 运行流水线（在 Claude Code 中使用 AI 助手执行，而非此命令）
+```
+
+**重要**: `factory run` 命令不直接执行流水线。流水线必须由 AI 助手（Claude Code/OpenCode）读取 `.factory/pipeline.yaml` 和 `agents/` 定义后执行。
+
+### 路径解析优先级
+
+当 Agent 引用 Skill 或 Policy 文件时，按以下顺序查找：
+
+1. **`.factory/` 目录** - CLI 初始化后的项目（生产环境）
+2. **根目录** - 开发环境（直接使用项目模板）
+
+例如：Agent 引用 `skills/prd/skill.md` 时，先尝试 `.factory/skills/prd/skill.md`，不存在则尝试 `skills/prd/skill.md`。
+
+### 必需的 Claude 插件
+
+某些阶段需要外部 Claude 插件（在 `factory init` 时自动尝试安装）：
+
+- **superpowers** - Bootstrap 阶段用于深入挖掘产品想法
+- **ui-ux-pro-max-skill** - UI 阶段用于生成专业设计系统
+
+如果插件安装失败，AI 助手会提示手动安装。
+
 ## 项目概述
 
 这是一个基于检查点的 AI Agent 工厂系统,通过流水线式工作流自动化生成可运行的 MVP 应用。系统采用多 Agent 协作模式,每个 Agent 负责特定阶段的任务,由 Sisyphus 调度器统一协调。
@@ -202,6 +245,16 @@ Skills 是可复用的知识模块 (`skills/*/skill.md`),包含:
 - **安全检查清单**: 输入验证、SQL 注入防护、CORS 配置等
 - **性能优化**: 数据库索引、缓存策略、查询优化
 
+**UI 复刻要求（1:1 还原）**:
+- **必须 1:1 复刻 UI 阶段生成的 HTML/CSS 效果**，包括：
+  - 页面数量必须与 `artifacts/ui/` 中定义的完全一致
+  - 每个页面的 UI 布局、间距、对齐方式必须与 HTML 预览完全一致
+  - 颜色、字体、圆角、阴影等视觉细节必须保持一致
+  - 元素动画（如加载动画、过渡效果）必须复刻
+  - **Web 预览时必须实现鼠标 hover 效果**（使用 `onHoverIn`/`onHoverOut` 或 `useState` 模拟）
+- **禁止**擅自"优化"或"简化" UI 设计
+- 如果 UI 阶段的 HTML 包含交互效果（hover、focus、active 等），React Native 代码必须实现等效交互
+
 ### Tech Agent 特殊要求
 - 必须包含数据库迁移策略 (Prisma Migrate)
 - 提供 SQLite → PostgreSQL 迁移指南
@@ -289,4 +342,70 @@ Skills 是可复用的知识模块 (`skills/*/skill.md`),包含:
 - Semantic Versioning (MAJOR.MINOR.PATCH)
 - 与 Conventional Commits 集成
 - 自动化工具: conventional-changelog-cli, release-it
+
+## Factory 本身的开发
+
+如果您要为 Agent Factory 项目本身贡献代码（而非使用它生成应用）：
+
+### 本地开发
+
+```bash
+# 克隆仓库
+git clone https://github.com/hyz1992/agent-app-factory.git
+cd agent-app-factory
+
+# 安装依赖
+npm install
+
+# 本地链接 CLI（开发模式）
+npm link
+
+# 现在可以使用 factory 命令
+factory --version
+```
+
+### 测试 CLI
+
+```bash
+# 创建测试目录
+mkdir /tmp/test-factory && cd /tmp/test-factory
+
+# 初始化测试项目
+factory init
+
+# 验证文件结构
+ls -la .factory/
+```
+
+### 发布到 npm
+
+详见 [PUBLISH_TO_NPM.md](PUBLISH_TO_NPM.md)：
+
+```bash
+# 更新版本
+npm version patch  # 或 minor/major
+
+# 发布
+npm publish --access public
+```
+
+### CLI 文件结构
+
+```
+cli/
+├── bin/
+│   └── factory.js           # CLI 入口
+├── commands/
+│   ├── init.js              # 初始化命令
+│   ├── continue.js          # 继续执行命令
+│   ├── status.js            # 状态查询
+│   ├── list.js              # 列出项目
+│   ├── reset.js             # 重置项目
+│   └── run.js               # 运行流水线（预留）
+├── scripts/
+│   ├── check-and-install-superpowers.js
+│   └── check-and-install-ui-skill.js
+└── utils/
+    └── claude-settings.js   # 生成 Claude Code 权限配置
+```
 
