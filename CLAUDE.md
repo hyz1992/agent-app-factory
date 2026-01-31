@@ -67,7 +67,7 @@ factory reset
 4. **tech** - 制定技术架构和数据模型 (`artifacts/tech/`, `artifacts/backend/prisma/`)
 5. **code** - 生成可运行的前后端代码 (`artifacts/backend/`, `artifacts/client/`)
 6. **validation** - 验证代码质量并主动修复编译错误（依赖、类型检查、Prisma schema、安全审查）
-7. **preview** - 生成运行说明文档 (`artifacts/preview/README.md`)
+7. **preview** - 启动并测试应用，自动修复运行时错误，生成运行指南和测试报告
 
 ### 调度器 (Sisyphus Orchestrator)
 
@@ -131,7 +131,7 @@ Skills 是可复用的知识模块 (`skills/*/skill.md`),包含:
 | tech | `artifacts/prd/` | `artifacts/tech/`, `artifacts/backend/prisma/` |
 | code | `artifacts/ui/`, `artifacts/tech/`, `artifacts/backend/prisma/` | `artifacts/backend/`, `artifacts/client/` |
 | validation | `artifacts/backend/`, `artifacts/client/` | `artifacts/backend/`, `artifacts/client/`, `artifacts/validation/` |
-| preview | `artifacts/backend/`, `artifacts/client/` | `artifacts/preview/` |
+| preview | `artifacts/backend/`, `artifacts/client/` | `artifacts/backend/`, `artifacts/client/`, `artifacts/preview/` |
 
 **越权处理**: 若 Agent 写入未授权目录,文件会被移至 `artifacts/_untrusted/<stage-id>/`,流水线暂停并等待人工介入。
 
@@ -163,7 +163,7 @@ Skills 是可复用的知识模块 (`skills/*/skill.md`),包含:
 │   ├── tech.agent.md
 │   ├── code.agent.md
 │   ├── validation.agent.md    # 代码验证与修复 Agent（主动修复编译错误）
-│   └── preview.agent.md
+│   └── preview.agent.md      # 演示准备与运行测试 Agent（启动并测试应用，自动修复运行时错误）
 ├── skills/                    # 可复用技能模块
 │   ├── bootstrap/skill.md     # 产品想法结构化
 │   ├── prd/skill.md           # PRD 生成
@@ -193,8 +193,8 @@ Skills 是可复用的知识模块 (`skills/*/skill.md`),包含:
     ├── tech/
     ├── backend/
     ├── client/
-    ├── validation/            # 代码验证报告
-    ├── preview/
+    ├── validation/            # 代码验证与修复报告
+    ├── preview/               # 运行指南 + 测试报告
     ├── _failed/               # 失败产物归档
     └── _untrusted/            # 越权文件隔离
 ```

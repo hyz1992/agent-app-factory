@@ -101,14 +101,20 @@ stages:
 
   - id: preview
     description: >
-      汇总运行方式并生成演示说明文档。
+      启动并测试应用，自动检测并修复运行时错误。实际启动后端服务器和前端客户端，
+      验证应用可正常运行，生成运行指南和测试报告。
     agent: agents/preview.agent.md
     inputs:
       - artifacts/backend/
       - artifacts/client/
     outputs:
-      - artifacts/preview/README.md
+      - artifacts/preview/README.md       # 运行指南
+      - artifacts/preview/test-report.md # 运行测试报告
+      - artifacts/backend/               # 可能包含修复后的代码
+      - artifacts/client/                # 可能包含修复后的代码
     exit_criteria:
-      - README 包含安装步骤
-      - README 包含运行命令
-      - README 列出访问地址和演示流程
+      - 运行指南已生成
+      - 测试报告已生成
+      - 后端服务成功启动（已自动修复启动问题）
+      - 前端服务成功启动（已自动修复启动问题）
+      - 核心功能可正常访问
