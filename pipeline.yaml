@@ -78,22 +78,26 @@ stages:
 
   - id: validation
     description: >
-      验证生成的代码质量，确保可以正常安装依赖、通过类型检查和基本验证。
+      验证代码质量并主动修复编译错误。执行严格代码审查（安全性、代码质量、架构一致性），
+      自动修复 TypeScript 类型错误、路径错误、依赖问题等编译错误。
     agent: agents/validation.agent.md
     inputs:
       - artifacts/backend/
       - artifacts/client/
     outputs:
       - artifacts/validation/report.md
+      - artifacts/backend/  # 可能包含修复后的代码
+      - artifacts/client/   # 可能包含修复后的代码
     exit_criteria:
       - 验证报告已生成
-      - 后端依赖可正常解析
-      - 前端依赖可正常解析
-      - TypeScript 编译无严重错误
+      - 后端依赖已安装且无错误
+      - 前端依赖已安装且无错误
+      - TypeScript 编译无错误（已自动修复所有编译错误）
       - Prisma schema 验证通过
+      - 安全性审查无严重问题
     on_failure:
       action: pause
-      message: "代码验证失败，请查看 artifacts/validation/report.md 了解详情并修复问题"
+      message: "代码验证失败，部分问题无法自动修复。请查看 artifacts/validation/report.md 了解详情"
 
   - id: preview
     description: >
